@@ -14,7 +14,7 @@ const Navigation = () => {
             <div className="bg-gradient-hero p-2 rounded-lg">
               <Store className="h-6 w-6 text-white" />
             </div>
-            <span className="text-xl font-bold text-foreground">VillageMarket</span>
+            <span className="text-xl font-bold text-foreground">EgyptBazaar</span>
           </div>
 
           {/* Desktop Navigation */}

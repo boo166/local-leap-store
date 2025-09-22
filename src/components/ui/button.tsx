@@ -15,9 +15,9 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary-light shadow-card transition-smooth",
         ghost: "hover:bg-accent hover:text-accent-foreground transition-smooth",
         link: "text-primary underline-offset-4 hover:underline transition-smooth",
-        hero: "bg-gradient-hero text-white hover:shadow-elegant transform hover:scale-105 font-semibold transition-bounce",
-        market: "bg-gradient-market text-white hover:shadow-primary transform hover:-translate-y-1 transition-bounce",
-        warm: "bg-gradient-warm text-foreground hover:shadow-card transform hover:scale-105 transition-bounce",
+        hero: "bg-gradient-hero text-white hover:shadow-pharaoh transform hover:scale-105 font-semibold transition-royal",
+        pharaoh: "bg-gradient-pharaoh text-foreground hover:shadow-primary transform hover:-translate-y-1 transition-royal",
+        nile: "bg-gradient-nile text-white hover:shadow-card transform hover:scale-105 transition-royal",
       },
       size: {
         default: "h-10 px-4 py-2",

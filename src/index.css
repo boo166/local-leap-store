@@ -8,56 +8,56 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Village marketplace color palette - warm, community-focused */
-    --background: 45 100% 98%;
-    --foreground: 25 25% 15%;
+    /* Egyptian marketplace color palette - golden sands, royal blues, rich history */
+    --background: 45 30% 98%;
+    --foreground: 220 25% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 25 25% 15%;
+    --card-foreground: 220 25% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 25 25% 15%;
+    --popover-foreground: 220 25% 15%;
 
-    /* Primary: Warm orange representing community warmth */
-    --primary: 25 95% 53%;
-    --primary-foreground: 0 0% 100%;
-    --primary-light: 25 95% 65%;
-    --primary-dark: 25 85% 45%;
+    /* Primary: Ancient Egyptian gold */
+    --primary: 45 95% 50%;
+    --primary-foreground: 220 25% 15%;
+    --primary-light: 45 85% 65%;
+    --primary-dark: 45 85% 40%;
 
-    /* Secondary: Deep green representing growth and prosperity */
-    --secondary: 150 60% 35%;
+    /* Secondary: Royal Nile blue */
+    --secondary: 220 75% 35%;
     --secondary-foreground: 0 0% 100%;
-    --secondary-light: 150 50% 50%;
+    --secondary-light: 220 65% 50%;
 
-    /* Accent: Bright market gold */
-    --accent: 45 90% 60%;
-    --accent-foreground: 25 25% 15%;
+    /* Accent: Desert sand gold */
+    --accent: 35 85% 55%;
+    --accent-foreground: 220 25% 15%;
 
-    --muted: 45 50% 95%;
-    --muted-foreground: 25 15% 55%;
+    --muted: 45 25% 94%;
+    --muted-foreground: 220 15% 50%;
 
     --destructive: 0 75% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 45 30% 88%;
-    --input: 45 30% 88%;
-    --ring: 25 95% 53%;
+    --border: 45 20% 85%;
+    --input: 45 20% 85%;
+    --ring: 45 95% 50%;
 
     --radius: 0.75rem;
 
-    /* Beautiful gradients for hero sections */
+    /* Egyptian-inspired gradients */
     --gradient-hero: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%);
-    --gradient-warm: linear-gradient(45deg, hsl(var(--accent)) 0%, hsl(var(--primary-light)) 100%);
-    --gradient-market: linear-gradient(120deg, hsl(var(--secondary-light)) 0%, hsl(var(--primary)) 100%);
+    --gradient-pharaoh: linear-gradient(45deg, hsl(var(--accent)) 0%, hsl(var(--primary-light)) 100%);
+    --gradient-nile: linear-gradient(120deg, hsl(var(--secondary-light)) 0%, hsl(var(--primary)) 100%);
     
-    /* Elegant shadows using brand colors */
-    --shadow-primary: 0 10px 40px -10px hsl(var(--primary) / 0.3);
-    --shadow-card: 0 4px 20px -2px hsl(var(--foreground) / 0.1);
-    --shadow-elegant: 0 20px 60px -10px hsl(var(--primary) / 0.2);
+    /* Elegant shadows with Egyptian gold tones */
+    --shadow-primary: 0 10px 40px -10px hsl(var(--primary) / 0.4);
+    --shadow-card: 0 4px 20px -2px hsl(var(--foreground) / 0.08);
+    --shadow-pharaoh: 0 20px 60px -10px hsl(var(--accent) / 0.3);
 
-    /* Smooth transitions */
+    /* Smooth transitions with royal elegance */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --transition-royal: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
     --sidebar-background: 0 0% 98%;
 

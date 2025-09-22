@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Store, Users, TrendingUp } from "lucide-react";
-import heroImage from "@/assets/hero-marketplace.jpg";
+import heroImage from "@/assets/hero-egyptian-marketplace.jpg";
 
 const HeroSection = () => {
   return (
@@ -12,11 +12,11 @@ const HeroSection = () => {
           <div className="text-white">
             <h1 className="text-4xl lg:text-6xl font-bold leading-tight mb-6">
               Empower Your
-              <span className="block text-accent"> Village Economy</span>
+              <span className="block text-accent"> Egyptian Economy</span>
             </h1>
             <p className="text-xl lg:text-2xl text-white/90 mb-8 leading-relaxed">
-              Join the digital marketplace revolution. Help local brands in your community 
-              create online stores, reach more customers, and grow their businesses.
+              Join the digital bazaar revolution. Help local Egyptian brands 
+              create online stores, reach more customers across the Nile, and grow their ancient crafts businesses.
             </p>
             
             {/* Stats */}
@@ -46,7 +46,7 @@ const HeroSection = () => {
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button variant="warm" size="lg" className="text-lg px-8">
+              <Button variant="pharaoh" size="lg" className="text-lg px-8">
                 Start Your Store
                 <ArrowRight className="h-5 w-5 ml-2" />
               </Button>
@@ -58,10 +58,10 @@ const HeroSection = () => {
 
           {/* Image */}
           <div className="relative">
-            <div className="rounded-2xl overflow-hidden shadow-elegant">
+            <div className="rounded-2xl overflow-hidden shadow-pharaoh">
               <img 
                 src={heroImage} 
-                alt="Local village marketplace with vendors selling traditional crafts and goods"
+                alt="Egyptian marketplace bazaar with traditional vendors selling crafts, spices and goods with pyramid architecture"
                 className="w-full h-[500px] object-cover"
               />
             </div>
@@ -73,7 +73,7 @@ const HeroSection = () => {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-foreground">New Store Created</p>
-                  <p className="text-xs text-muted-foreground">Mama Sarah's Textiles</p>
+                  <p className="text-xs text-muted-foreground">Cleopatra's Papyrus Art</p>
                 </div>
               </div>
             </div>
