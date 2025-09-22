@@ -6,15 +6,15 @@ const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <nav className="bg-background/95 backdrop-blur-sm border-b border-border sticky top-0 z-50">
+    <nav className="glass border-b border-border sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center space-x-2">
-            <div className="bg-gradient-hero p-2 rounded-lg">
+            <div className="bg-gradient-apple p-2 rounded-lg">
               <Store className="h-6 w-6 text-white" />
             </div>
-            <span className="text-xl font-bold text-foreground">EgyptBazaar</span>
+            <span className="text-xl font-bold text-foreground">GlassStore</span>
           </div>
 
           {/* Desktop Navigation */}
@@ -39,7 +39,7 @@ const Navigation = () => {
               <User className="h-4 w-4 mr-2" />
               Sign In
             </Button>
-            <Button variant="hero" size="sm">
+            <Button variant="apple" size="sm">
               Start Selling
             </Button>
             <Button variant="outline" size="icon">
@@ -80,7 +80,7 @@ const Navigation = () => {
                   <User className="h-4 w-4 mr-2" />
                   Sign In
                 </Button>
-                <Button variant="hero" size="sm">
+                <Button variant="apple" size="sm">
                   Start Selling
                 </Button>
               </div>

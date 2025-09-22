@@ -11,7 +11,7 @@ const CTASection = () => {
   ];
 
   return (
-    <section className="py-24 bg-gradient-nile relative overflow-hidden">
+    <section className="py-24 bg-gradient-apple relative overflow-hidden">
       <div className="absolute inset-0 bg-black/10"></div>
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h2 className="text-3xl lg:text-5xl font-bold text-white mb-6">
@@ -32,7 +32,7 @@ const CTASection = () => {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <Button variant="pharaoh" size="lg" className="text-lg px-12 py-4">
+          <Button variant="glass" size="lg" className="text-lg px-12 py-4">
             Start Selling Now
             <ArrowRight className="h-5 w-5 ml-2" />
           </Button>

@@ -8,14 +8,14 @@ const Footer = () => {
           {/* Brand */}
           <div className="md:col-span-1">
             <div className="flex items-center space-x-2 mb-6">
-              <div className="bg-gradient-hero p-2 rounded-lg">
+              <div className="bg-gradient-apple p-2 rounded-lg">
                 <Store className="h-6 w-6 text-white" />
               </div>
-              <span className="text-xl font-bold">EgyptBazaar</span>
+              <span className="text-xl font-bold">GlassStore</span>
             </div>
             <p className="text-gray-300 leading-relaxed mb-6">
-              Empowering Egyptian businesses with digital commerce solutions. 
-              Preserving ancient traditions while embracing modern technology.
+              Empowering modern businesses with beautiful, glass-inspired e-commerce solutions. 
+              Where cutting-edge technology meets stunning design aesthetics.
             </p>
             <div className="flex space-x-4">
               <Facebook className="h-5 w-5 text-gray-400 hover:text-white transition-smooth cursor-pointer" />
@@ -54,15 +54,15 @@ const Footer = () => {
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
                 <Mail className="h-5 w-5 text-gray-400" />
-                <span className="text-gray-300">hello@egyptbazaar.com</span>
+                <span className="text-gray-300">hello@glassstore.com</span>
               </div>
               <div className="flex items-center space-x-3">
                 <Phone className="h-5 w-5 text-gray-400" />
-                <span className="text-gray-300">+20 100 123 456</span>
+                <span className="text-gray-300">+1 (555) 123-4567</span>
               </div>
               <div className="flex items-center space-x-3">
                 <MapPin className="h-5 w-5 text-gray-400" />
-                <span className="text-gray-300">Cairo, Egypt</span>
+                <span className="text-gray-300">San Francisco, CA</span>
               </div>
             </div>
           </div>
@@ -70,7 +70,7 @@ const Footer = () => {
 
         <div className="border-t border-gray-700 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-400 text-sm">
-            © 2024 EgyptBazaar. All rights reserved.
+            © 2024 GlassStore. All rights reserved.
           </p>
           <div className="flex space-x-6 mt-4 md:mt-0">
             <a href="#" className="text-gray-400 hover:text-white text-sm transition-smooth">Privacy Policy</a>

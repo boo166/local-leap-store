@@ -67,18 +67,22 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       backgroundImage: {
-        'gradient-hero': 'var(--gradient-hero)',
-        'gradient-pharaoh': 'var(--gradient-pharaoh)',
-        'gradient-nile': 'var(--gradient-nile)',
+        'gradient-glass': 'var(--gradient-glass)',
+        'gradient-apple': 'var(--gradient-apple)',
+        'gradient-frosted': 'var(--gradient-frosted)',
       },
       boxShadow: {
-        'primary': 'var(--shadow-primary)',
-        'card': 'var(--shadow-card)',
-        'pharaoh': 'var(--shadow-pharaoh)',
+        'glass': 'var(--shadow-glass)',
+        'soft': 'var(--shadow-soft)',
+        'elevated': 'var(--shadow-elevated)',
       },
       transitionTimingFunction: {
         'smooth': 'var(--transition-smooth)',
-        'royal': 'var(--transition-royal)',
+        'spring': 'var(--transition-spring)',
+      },
+      backdropBlur: {
+        'glass': '20px',
+        'frosted': '10px',
       },
       keyframes: {
         "accordion-down": {

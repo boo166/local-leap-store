@@ -2,46 +2,46 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Star, MapPin, ExternalLink } from "lucide-react";
-import localBusinessOwner from "@/assets/egyptian-business-owner.jpg";
-import sampleProducts from "@/assets/egyptian-crafts.jpg";
+import localBusinessOwner from "@/assets/apple-business-owner.jpg";
+import sampleProducts from "@/assets/apple-products.jpg";
 
 const StoreShowcase = () => {
   const stores = [
     {
       id: 1,
-      name: "Cleopatra's Papyrus Art",
-      owner: "Fatima El-Sayed",
+      name: "TechCraft Studio",
+      owner: "Sarah Chen",
       rating: 4.9,
-      reviews: 187,
-      location: "Cairo, Egypt",
-      category: "Ancient Arts & Crafts",
-      products: 52,
+      reviews: 287,
+      location: "San Francisco, CA",
+      category: "Tech & Accessories",
+      products: 64,
       image: localBusinessOwner,
-      description: "Authentic Egyptian papyrus art and hieroglyphic paintings handcrafted using traditional methods."
+      description: "Premium tech accessories and modern gadgets designed with Apple-quality craftsmanship and attention to detail."
     },
     {
       id: 2,
-      name: "Pharaoh's Golden Treasures",
-      owner: "Ahmed Hassan",
+      name: "Minimal Design Co",
+      owner: "Alex Johnson",
       rating: 4.8,
-      reviews: 143,
-      location: "Luxor, Egypt",
-      category: "Jewelry & Gold",
-      products: 38,
+      reviews: 198,
+      location: "New York, NY",
+      category: "Design & Lifestyle",
+      products: 42,
       image: sampleProducts,
-      description: "Exquisite Egyptian jewelry inspired by ancient pharaohs, crafted with precious metals and stones."
+      description: "Curated collection of minimalist products inspired by modern design principles and clean aesthetics."
     },
     {
       id: 3,
-      name: "Nile Valley Spices",
-      owner: "Yasmin Abdel Rahman",
+      name: "Glass & Light",
+      owner: "Maria Rodriguez",
       rating: 4.7,
-      reviews: 201,
-      location: "Alexandria, Egypt",
-      category: "Spices & Herbs",
-      products: 41,
+      reviews: 156,
+      location: "Los Angeles, CA",
+      category: "Home & Decor",
+      products: 38,
       image: localBusinessOwner,
-      description: "Premium Egyptian spices and aromatic herbs sourced from the fertile Nile Valley gardens."
+      description: "Beautiful glass and modern home decor pieces that bring light and elegance to any space."
     }
   ];
 
@@ -50,17 +50,17 @@ const StoreShowcase = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
-            Featured Egyptian Artisans
+            Featured Design Stores
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Discover authentic Egyptian crafts from talented artisans preserving ancient traditions. 
-            Support local businesses and find unique treasures from the land of the pharaohs.
+            Discover premium products from talented creators who share Apple's passion for beautiful design. 
+            Support innovative businesses and find unique items crafted with precision and care.
           </p>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {stores.map((store) => (
-            <Card key={store.id} className="group hover:shadow-pharaoh transition-smooth cursor-pointer overflow-hidden">
+            <Card key={store.id} className="group hover-lift glass-card cursor-pointer overflow-hidden">
               <div className="relative">
                 <img 
                   src={store.image} 
@@ -101,7 +101,7 @@ const StoreShowcase = () => {
                   </div>
                 </div>
 
-                <Button variant="nile" className="w-full">
+                <Button variant="apple" className="w-full">
                   Visit Store
                   <ExternalLink className="h-4 w-4 ml-2" />
                 </Button>

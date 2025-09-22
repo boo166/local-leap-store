@@ -8,56 +8,61 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Egyptian marketplace color palette - golden sands, royal blues, rich history */
-    --background: 45 30% 98%;
-    --foreground: 220 25% 15%;
+    /* Apple glass design system - clean, minimal, glassmorphism */
+    --background: 0 0% 98%;
+    --foreground: 0 0% 9%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 25% 15%;
+    --card-foreground: 0 0% 9%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 25% 15%;
+    --popover-foreground: 0 0% 9%;
 
-    /* Primary: Ancient Egyptian gold */
-    --primary: 45 95% 50%;
-    --primary-foreground: 220 25% 15%;
-    --primary-light: 45 85% 65%;
-    --primary-dark: 45 85% 40%;
+    /* Primary: Apple system blue */
+    --primary: 212 100% 50%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 212 100% 60%;
+    --primary-dark: 212 100% 40%;
 
-    /* Secondary: Royal Nile blue */
-    --secondary: 220 75% 35%;
-    --secondary-foreground: 0 0% 100%;
-    --secondary-light: 220 65% 50%;
+    /* Secondary: Apple system gray */
+    --secondary: 0 0% 95%;
+    --secondary-foreground: 0 0% 9%;
+    --secondary-light: 0 0% 97%;
 
-    /* Accent: Desert sand gold */
-    --accent: 35 85% 55%;
-    --accent-foreground: 220 25% 15%;
+    /* Accent: Apple system purple */
+    --accent: 265 100% 60%;
+    --accent-foreground: 0 0% 100%;
 
-    --muted: 45 25% 94%;
-    --muted-foreground: 220 15% 50%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
 
-    --destructive: 0 75% 55%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 45 20% 85%;
-    --input: 45 20% 85%;
-    --ring: 45 95% 50%;
+    --border: 0 0% 90%;
+    --input: 0 0% 95%;
+    --ring: 212 100% 50%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
-    /* Egyptian-inspired gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%);
-    --gradient-pharaoh: linear-gradient(45deg, hsl(var(--accent)) 0%, hsl(var(--primary-light)) 100%);
-    --gradient-nile: linear-gradient(120deg, hsl(var(--secondary-light)) 0%, hsl(var(--primary)) 100%);
+    /* Glass morphism effects */
+    --glass-bg: rgba(255, 255, 255, 0.25);
+    --glass-border: rgba(255, 255, 255, 0.18);
+    --glass-shadow: rgba(31, 38, 135, 0.37);
     
-    /* Elegant shadows with Egyptian gold tones */
-    --shadow-primary: 0 10px 40px -10px hsl(var(--primary) / 0.4);
-    --shadow-card: 0 4px 20px -2px hsl(var(--foreground) / 0.08);
-    --shadow-pharaoh: 0 20px 60px -10px hsl(var(--accent) / 0.3);
+    /* Apple-inspired gradients */
+    --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.1) 100%);
+    --gradient-apple: linear-gradient(135deg, hsl(212 100% 50%) 0%, hsl(265 100% 60%) 100%);
+    --gradient-frosted: linear-gradient(145deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.05) 100%);
+    
+    /* Sophisticated shadows */
+    --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    --shadow-soft: 0 4px 30px rgba(0, 0, 0, 0.1);
+    --shadow-elevated: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 
-    /* Smooth transitions with royal elegance */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-royal: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    /* Smooth Apple-like transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    --transition-spring: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 
     --sidebar-background: 0 0% 98%;
 
@@ -122,5 +127,40 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  /* Glass morphism utilities */
+  .glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-glass);
+  }
+  
+  .glass-card {
+    background: var(--gradient-glass);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-soft);
+  }
+  
+  .frosted {
+    background: var(--gradient-frosted);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  
+  /* Apple-style animations */
+  .hover-lift {
+    transition: var(--transition-spring);
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: var(--shadow-elevated);
   }
 }
