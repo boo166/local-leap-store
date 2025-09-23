@@ -51,7 +51,7 @@ const Navigation = () => {
           <div className="hidden md:flex items-center space-x-4">
             {user ? (
               <>
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" onClick={() => navigate('/profile')}>
                   <User className="h-4 w-4 mr-2" />
                   Profile
                 </Button>
@@ -107,7 +107,7 @@ const Navigation = () => {
               <div className="flex flex-col space-y-2 pt-4 border-t border-border">
                 {user ? (
                   <>
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" onClick={() => navigate('/profile')}>
                       <User className="h-4 w-4 mr-2" />
                       Profile
                     </Button>

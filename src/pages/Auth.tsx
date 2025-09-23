@@ -180,7 +180,7 @@ const Auth = () => {
             </Button>
           </form>
 
-          <div className="text-center">
+          <div className="space-y-2 text-center">
             <Button
               type="button"
               variant="ghost"
@@ -189,6 +189,19 @@ const Auth = () => {
             >
               {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
             </Button>
+            
+            {isLogin && (
+              <div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => navigate('/forgot-password')}
+                  className="text-sm text-muted-foreground hover:text-primary hover:bg-white/10"
+                >
+                  Forgot your password?
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </Card>
