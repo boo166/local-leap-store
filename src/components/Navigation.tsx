@@ -1,9 +1,23 @@
 import { Button } from "@/components/ui/button";
-import { Store, ShoppingBag, User, Menu } from "lucide-react";
+import { Store, ShoppingBag, User, Menu, LogOut } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast({
+      title: "Signed out successfully",
+      description: "You have been logged out of your account.",
+    });
+  };
 
   return (
     <nav className="glass border-b border-border sticky top-0 z-50">
@@ -35,16 +49,31 @@ const Navigation = () => {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="ghost" size="sm">
-              <User className="h-4 w-4 mr-2" />
-              Sign In
-            </Button>
-            <Button variant="apple" size="sm">
-              Start Selling
-            </Button>
-            <Button variant="outline" size="icon">
-              <ShoppingBag className="h-4 w-4" />
-            </Button>
+            {user ? (
+              <>
+                <Button variant="ghost" size="sm">
+                  <User className="h-4 w-4 mr-2" />
+                  Profile
+                </Button>
+                <Button variant="outline" size="icon">
+                  <ShoppingBag className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" onClick={() => navigate('/auth')}>
+                  <User className="h-4 w-4 mr-2" />
+                  Sign In
+                </Button>
+                <Button variant="apple" size="sm" onClick={() => navigate('/auth')}>
+                  Start Selling
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -76,13 +105,28 @@ const Navigation = () => {
                 About
               </a>
               <div className="flex flex-col space-y-2 pt-4 border-t border-border">
-                <Button variant="ghost" size="sm">
-                  <User className="h-4 w-4 mr-2" />
-                  Sign In
-                </Button>
-                <Button variant="apple" size="sm">
-                  Start Selling
-                </Button>
+                {user ? (
+                  <>
+                    <Button variant="ghost" size="sm">
+                      <User className="h-4 w-4 mr-2" />
+                      Profile
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sign Out
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button variant="ghost" size="sm" onClick={() => navigate('/auth')}>
+                      <User className="h-4 w-4 mr-2" />
+                      Sign In
+                    </Button>
+                    <Button variant="apple" size="sm" onClick={() => navigate('/auth')}>
+                      Start Selling
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>
