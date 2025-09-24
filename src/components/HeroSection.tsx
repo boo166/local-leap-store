@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Store, Users, TrendingUp } from "lucide-react";
+import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-glass-marketplace.jpg";
 
 const HeroSection = () => {
@@ -46,13 +47,17 @@ const HeroSection = () => {
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button variant="glass" size="lg" className="text-lg px-8">
-                Start Your Store
-                <ArrowRight className="h-5 w-5 ml-2" />
-              </Button>
-              <Button variant="outline" size="lg" className="text-lg px-8 border-white text-white hover:bg-white hover:text-foreground">
-                Browse Marketplace
-              </Button>
+              <Link to="/dashboard">
+                <Button variant="glass" size="lg" className="text-lg px-8">
+                  Start Your Store
+                  <ArrowRight className="h-5 w-5 ml-2" />
+                </Button>
+              </Link>
+              <Link to="/marketplace">
+                <Button variant="outline" size="lg" className="text-lg px-8 border-white text-white hover:bg-white hover:text-foreground">
+                  Browse Marketplace
+                </Button>
+              </Link>
             </div>
           </div>
 

@@ -2,6 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Star, MapPin, ExternalLink } from "lucide-react";
+import { Link } from "react-router-dom";
 import localBusinessOwner from "@/assets/apple-business-owner.jpg";
 import sampleProducts from "@/assets/apple-products.jpg";
 
@@ -101,19 +102,23 @@ const StoreShowcase = () => {
                   </div>
                 </div>
 
-                <Button variant="apple" className="w-full">
-                  Visit Store
-                  <ExternalLink className="h-4 w-4 ml-2" />
-                </Button>
+                <Link to="/marketplace">
+                  <Button variant="apple" className="w-full">
+                    Visit Store
+                    <ExternalLink className="h-4 w-4 ml-2" />
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
           ))}
         </div>
 
         <div className="text-center mt-12">
-          <Button variant="outline" size="lg">
-            View All Stores
-          </Button>
+          <Link to="/marketplace">
+            <Button variant="outline" size="lg">
+              View All Stores
+            </Button>
+          </Link>
         </div>
       </div>
     </section>
