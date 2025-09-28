@@ -2,8 +2,9 @@ import { Button } from "@/components/ui/button";
 import { Store, ShoppingBag, User, Menu, LogOut } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import CartIcon from "@/components/CartIcon";
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -33,19 +34,19 @@ const Navigation = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <a href="#" className="text-foreground hover:text-primary transition-smooth">
-              Browse Stores
-            </a>
-            <a href="#" className="text-foreground hover:text-primary transition-smooth">
-              Products
-            </a>
-            <a href="#" className="text-foreground hover:text-primary transition-smooth">
-              For Brands
-            </a>
+            <Link to="/marketplace" className="text-foreground hover:text-primary transition-smooth">
+              Marketplace
+            </Link>
+            <Link to="/dashboard" className="text-foreground hover:text-primary transition-smooth">
+              Dashboard
+            </Link>
             <a href="#" className="text-foreground hover:text-primary transition-smooth">
               About
             </a>
           </div>
+
+          {/* Cart Icon */}
+          <CartIcon />
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center space-x-4">
@@ -54,9 +55,6 @@ const Navigation = () => {
                 <Button variant="ghost" size="sm" onClick={() => navigate('/profile')}>
                   <User className="h-4 w-4 mr-2" />
                   Profile
-                </Button>
-                <Button variant="outline" size="icon">
-                  <ShoppingBag className="h-4 w-4" />
                 </Button>
                 <Button variant="ghost" size="sm" onClick={handleSignOut}>
                   <LogOut className="h-4 w-4 mr-2" />

@@ -19,6 +19,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCart } from '@/hooks/useCart';
 
 interface StoreData {
   id: string;
@@ -50,6 +51,7 @@ const Store = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { addToCart } = useCart();
 
   useEffect(() => {
     if (storeId) {
@@ -100,42 +102,8 @@ const Store = () => {
     }
   };
 
-  const addToCart = async (productId: string) => {
-    if (!user) {
-      toast({
-        title: "Please sign in",
-        description: "You need to sign in to add items to your cart.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('cart_items')
-        .upsert({
-          user_id: user.id,
-          product_id: productId,
-          quantity: 1
-        }, {
-          onConflict: 'user_id,product_id'
-        });
-
-      if (error) {
-        throw error;
-      }
-
-      toast({
-        title: "Added to cart",
-        description: "Item has been added to your cart.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error adding to cart",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
+  const handleAddToCart = async (productId: string) => {
+    await addToCart(productId, 1);
   };
 
   const formatPrice = (price: number) => {
@@ -342,7 +310,7 @@ const Store = () => {
                     </div>
                     
                     <Button
-                      onClick={() => addToCart(product.id)}
+                      onClick={() => handleAddToCart(product.id)}
                       disabled={product.inventory_count === 0}
                       variant="apple"
                       size="sm"
