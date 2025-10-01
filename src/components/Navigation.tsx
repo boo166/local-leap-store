@@ -35,7 +35,10 @@ const Navigation = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
             <Link to="/marketplace" className="text-foreground hover:text-primary transition-smooth">
-              Marketplace
+              Stores
+            </Link>
+            <Link to="/products" className="text-foreground hover:text-primary transition-smooth">
+              Products
             </Link>
             {user && (
               <Link to="/orders" className="text-foreground hover:text-primary transition-smooth">
@@ -45,9 +48,6 @@ const Navigation = () => {
             <Link to="/dashboard" className="text-foreground hover:text-primary transition-smooth">
               Dashboard
             </Link>
-            <a href="#" className="text-foreground hover:text-primary transition-smooth">
-              About
-            </a>
           </div>
 
           {/* Cart Icon */}
@@ -96,7 +96,10 @@ const Navigation = () => {
           <div className="md:hidden border-t border-border mt-2 pt-4 pb-4">
             <div className="flex flex-col space-y-4">
               <Link to="/marketplace" className="text-foreground hover:text-primary transition-smooth">
-                Marketplace
+                Stores
+              </Link>
+              <Link to="/products" className="text-foreground hover:text-primary transition-smooth">
+                Products
               </Link>
               {user && (
                 <>
@@ -108,9 +111,6 @@ const Navigation = () => {
                   </Link>
                 </>
               )}
-              <a href="#" className="text-foreground hover:text-primary transition-smooth">
-                About
-              </a>
               <div className="flex flex-col space-y-2 pt-4 border-t border-border">
                 {user ? (
                   <>

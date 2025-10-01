@@ -11,11 +11,14 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import EmailVerification from "./pages/EmailVerification";
 import Marketplace from "./pages/Marketplace";
+import Products from "./pages/Products";
 import Store from "./pages/Store";
 import Cart from "./pages/Cart";
 import Dashboard from "./pages/Dashboard";
 import CreateStore from "./pages/CreateStore";
 import AddProduct from "./pages/AddProduct";
+import EditStore from "./pages/EditStore";
+import EditProduct from "./pages/EditProduct";
 import Orders from "./pages/Orders";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -41,11 +44,14 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/verify-email" element={<EmailVerification />} />
             <Route path="/marketplace" element={<Marketplace />} />
+            <Route path="/products" element={<Products />} />
             <Route path="/store/:storeId" element={<Store />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/create-store" element={<CreateStore />} />
             <Route path="/add-product" element={<AddProduct />} />
+            <Route path="/edit-store/:storeId" element={<EditStore />} />
+            <Route path="/edit-product/:productId" element={<EditProduct />} />
             <Route path="/orders" element={<Orders />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

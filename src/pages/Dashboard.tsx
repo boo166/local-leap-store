@@ -289,7 +289,7 @@ const Dashboard = () => {
                               </Button>
                             </Link>
                             <Link to={`/edit-store/${store.id}`} className="flex-1">
-                              <Button variant="outline" size="sm" className="w-full">
+                              <Button variant="apple" size="sm" className="w-full">
                                 <Edit className="h-3 w-3 mr-1" />
                                 Edit
                               </Button>
@@ -381,10 +381,12 @@ const Dashboard = () => {
                             {formatPrice(product.price)}
                           </div>
                           
-                          <Button variant="outline" size="sm" className="w-full">
-                            <Edit className="h-3 w-3 mr-1" />
-                            Edit
-                          </Button>
+                          <Link to={`/edit-product/${product.id}`} className="w-full block">
+                            <Button variant="apple" size="sm" className="w-full">
+                              <Edit className="h-3 w-3 mr-1" />
+                              Edit
+                            </Button>
+                          </Link>
                         </CardContent>
                       </Card>
                     ))}

@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, CheckCircle } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const CTASection = () => {
   const benefits = [
@@ -32,17 +33,21 @@ const CTASection = () => {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <Button variant="glass" size="lg" className="text-lg px-12 py-4">
-            Start Selling Now
-            <ArrowRight className="h-5 w-5 ml-2" />
-          </Button>
-          <Button 
-            variant="outline" 
-            size="lg" 
-            className="text-lg px-12 py-4 border-white text-white hover:bg-white hover:text-foreground"
-          >
-            Schedule Demo
-          </Button>
+          <Link to="/dashboard">
+            <Button variant="glass" size="lg" className="text-lg px-12 py-4">
+              Start Selling Now
+              <ArrowRight className="h-5 w-5 ml-2" />
+            </Button>
+          </Link>
+          <Link to="/products">
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="text-lg px-12 py-4 border-white text-white hover:bg-white hover:text-foreground"
+            >
+              Browse Products
+            </Button>
+          </Link>
         </div>
 
         <p className="text-white/80 text-sm mt-6">
