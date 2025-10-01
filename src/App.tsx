@@ -14,6 +14,9 @@ import Marketplace from "./pages/Marketplace";
 import Store from "./pages/Store";
 import Cart from "./pages/Cart";
 import Dashboard from "./pages/Dashboard";
+import CreateStore from "./pages/CreateStore";
+import AddProduct from "./pages/AddProduct";
+import Orders from "./pages/Orders";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -41,6 +44,9 @@ const App = () => (
             <Route path="/store/:storeId" element={<Store />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/create-store" element={<CreateStore />} />
+            <Route path="/add-product" element={<AddProduct />} />
+            <Route path="/orders" element={<Orders />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

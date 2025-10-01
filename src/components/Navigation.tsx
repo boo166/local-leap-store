@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Store, ShoppingBag, User, Menu, LogOut } from "lucide-react";
+import { Store, ShoppingBag, User, Menu, LogOut, Package } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
@@ -37,6 +37,11 @@ const Navigation = () => {
             <Link to="/marketplace" className="text-foreground hover:text-primary transition-smooth">
               Marketplace
             </Link>
+            {user && (
+              <Link to="/orders" className="text-foreground hover:text-primary transition-smooth">
+                Orders
+              </Link>
+            )}
             <Link to="/dashboard" className="text-foreground hover:text-primary transition-smooth">
               Dashboard
             </Link>
@@ -90,15 +95,19 @@ const Navigation = () => {
         {isMenuOpen && (
           <div className="md:hidden border-t border-border mt-2 pt-4 pb-4">
             <div className="flex flex-col space-y-4">
-              <a href="#" className="text-foreground hover:text-primary transition-smooth">
-                Browse Stores
-              </a>
-              <a href="#" className="text-foreground hover:text-primary transition-smooth">
-                Products
-              </a>
-              <a href="#" className="text-foreground hover:text-primary transition-smooth">
-                For Brands
-              </a>
+              <Link to="/marketplace" className="text-foreground hover:text-primary transition-smooth">
+                Marketplace
+              </Link>
+              {user && (
+                <>
+                  <Link to="/orders" className="text-foreground hover:text-primary transition-smooth">
+                    Orders
+                  </Link>
+                  <Link to="/dashboard" className="text-foreground hover:text-primary transition-smooth">
+                    Dashboard
+                  </Link>
+                </>
+              )}
               <a href="#" className="text-foreground hover:text-primary transition-smooth">
                 About
               </a>

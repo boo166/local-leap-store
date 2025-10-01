@@ -165,6 +165,62 @@ const Cart = () => {
     return cartItems.reduce((total, item) => total + item.quantity, 0);
   };
 
+  const handleCheckout = async () => {
+    if (cartItems.length === 0) return;
+
+    try {
+      // Create order
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          user_id: user?.id,
+          total_amount: getTotalPrice() * 1.08, // Including tax
+          status: 'pending',
+          shipping_address: 'Default Address' // In production, collect from user
+        })
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      // Create order items
+      const orderItems = cartItems.map(item => ({
+        order_id: order.id,
+        product_id: item.products.id,
+        quantity: item.quantity,
+        price_at_time: item.products.price
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems);
+
+      if (itemsError) throw itemsError;
+
+      // Clear cart
+      const { error: clearError } = await supabase
+        .from('cart_items')
+        .delete()
+        .eq('user_id', user?.id);
+
+      if (clearError) throw clearError;
+
+      toast({
+        title: "Order placed successfully!",
+        description: "Thank you for your purchase. You can track your order in the Orders page.",
+      });
+
+      // Navigate to orders page
+      window.location.href = '/orders';
+    } catch (error: any) {
+      toast({
+        title: "Checkout failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <ProtectedRoute>
@@ -337,7 +393,12 @@ const Cart = () => {
                         <span>{formatPrice(getTotalPrice() * 1.08)}</span>
                       </div>
                       
-                      <Button className="w-full" variant="apple" size="lg">
+                      <Button 
+                        className="w-full" 
+                        variant="apple" 
+                        size="lg"
+                        onClick={handleCheckout}
+                      >
                         <CreditCard className="h-4 w-4 mr-2" />
                         Proceed to Checkout
                       </Button>
