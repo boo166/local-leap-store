@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { Store, ShoppingBag, User, Menu, LogOut, Package } from "lucide-react";
+import { Store, ShoppingBag, User, Menu, LogOut, Package, Shield } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserRole } from "@/hooks/useUserRole";
 import { useNavigate, Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import CartIcon from "@/components/CartIcon";
@@ -9,6 +10,7 @@ import CartIcon from "@/components/CartIcon";
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const { isAdmin } = useUserRole();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -43,6 +45,11 @@ const Navigation = () => {
             {user && (
               <Link to="/orders" className="text-foreground hover:text-primary transition-smooth">
                 Orders
+              </Link>
+            )}
+            {isAdmin && (
+              <Link to="/admin" className="text-foreground hover:text-primary transition-smooth">
+                Admin
               </Link>
             )}
             <Link to="/dashboard" className="text-foreground hover:text-primary transition-smooth">
@@ -106,6 +113,11 @@ const Navigation = () => {
                   <Link to="/orders" className="text-foreground hover:text-primary transition-smooth">
                     Orders
                   </Link>
+                  {isAdmin && (
+                    <Link to="/admin" className="text-foreground hover:text-primary transition-smooth">
+                      Admin
+                    </Link>
+                  )}
                   <Link to="/dashboard" className="text-foreground hover:text-primary transition-smooth">
                     Dashboard
                   </Link>
