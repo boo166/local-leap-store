@@ -141,7 +141,7 @@ const StoreShowcase = () => {
                     {store.location}
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    {store.products} products
+                    {store.product_count || store.products} products
                   </div>
                 </div>
 
