@@ -1,30 +1,41 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 const CTASection = () => {
-  const benefits = [
-    "Create your store in under 10 minutes",
-    "No setup fees or hidden costs",
-    "Accept local payment methods",
-    "Mobile-optimized for your customers",
-    "24/7 customer support in local languages"
-  ];
+  const [content, setContent] = useState<any>(null);
+
+  useEffect(() => {
+    fetchContent();
+  }, []);
+
+  const fetchContent = async () => {
+    const { data } = await supabase
+      .from('site_content')
+      .select('content')
+      .eq('section', 'cta')
+      .maybeSingle();
+    
+    if (data) setContent(data.content);
+  };
+
+  if (!content) return null;
 
   return (
     <section className="py-24 bg-gradient-apple relative overflow-hidden">
       <div className="absolute inset-0 bg-black/10"></div>
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h2 className="text-3xl lg:text-5xl font-bold text-white mb-6">
-          Ready to Transform Your Business?
+          {content.title}
         </h2>
         <p className="text-xl text-white/90 mb-12 max-w-3xl mx-auto leading-relaxed">
-          Join hundreds of local entrepreneurs who have already expanded their reach 
-          and increased their sales with VillageMarket. Your digital transformation starts today.
+          {content.subtitle}
         </p>
 
         <div className="grid md:grid-cols-5 gap-4 mb-12 text-left max-w-4xl mx-auto">
-          {benefits.map((benefit, index) => (
+          {content.benefits.map((benefit: string, index: number) => (
             <div key={index} className="flex items-center space-x-2 text-white">
               <CheckCircle className="h-5 w-5 text-accent flex-shrink-0" />
               <span className="text-sm">{benefit}</span>
@@ -51,7 +62,7 @@ const CTASection = () => {
         </div>
 
         <p className="text-white/80 text-sm mt-6">
-          Free 30-day trial • No credit card required • Cancel anytime
+          {content.disclaimer}
         </p>
       </div>
     </section>

@@ -49,6 +49,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import AdminRoute from '@/components/AdminRoute';
+import SiteContentManager from '@/components/SiteContentManager';
 
 const Admin = () => {
   const [stores, setStores] = useState<any[]>([]);
@@ -406,11 +407,12 @@ const Admin = () => {
 
             {/* Main Content */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="stores">Stores</TabsTrigger>
                 <TabsTrigger value="products">Products</TabsTrigger>
                 <TabsTrigger value="orders">Orders</TabsTrigger>
                 <TabsTrigger value="users">Users</TabsTrigger>
+                <TabsTrigger value="content">Site Content</TabsTrigger>
               </TabsList>
 
               {/* Stores Tab */}
@@ -583,6 +585,11 @@ const Admin = () => {
                     </Table>
                   </CardContent>
                 </Card>
+              </TabsContent>
+
+              {/* Site Content Tab */}
+              <TabsContent value="content" className="space-y-4">
+                <SiteContentManager />
               </TabsContent>
 
               {/* Users Tab */}

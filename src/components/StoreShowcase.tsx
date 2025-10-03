@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -5,9 +6,52 @@ import { Star, MapPin, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 import localBusinessOwner from "@/assets/apple-business-owner.jpg";
 import sampleProducts from "@/assets/apple-products.jpg";
+import { supabase } from "@/integrations/supabase/client";
 
 const StoreShowcase = () => {
-  const stores = [
+  const [content, setContent] = useState<any>(null);
+  const [stores, setStores] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchContent();
+    fetchStores();
+  }, []);
+
+  const fetchContent = async () => {
+    const { data } = await supabase
+      .from('site_content')
+      .select('content')
+      .eq('section', 'showcase')
+      .maybeSingle();
+    
+    if (data) setContent(data.content);
+  };
+
+  const fetchStores = async () => {
+    const { data } = await supabase
+      .from('stores')
+      .select(`
+        *,
+        profiles!stores_user_id_fkey(full_name),
+        products(id)
+      `)
+      .eq('is_active', true)
+      .limit(3);
+    
+    if (data) {
+      const storesWithCounts = data.map(store => ({
+        ...store,
+        owner: store.profiles?.full_name || 'Unknown',
+        rating: 4.8,
+        reviews: 150,
+        product_count: store.products?.length || 0,
+        image: store.image_url || localBusinessOwner
+      }));
+      setStores(storesWithCounts);
+    }
+  };
+
+  const defaultStores = [
     {
       id: 1,
       name: "TechCraft Studio",
@@ -51,16 +95,15 @@ const StoreShowcase = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
-            Featured Design Stores
+            {content?.title || 'Featured Design Stores'}
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Discover premium products from talented creators who share Apple's passion for beautiful design. 
-            Support innovative businesses and find unique items crafted with precision and care.
+            {content?.subtitle || 'Discover premium products from talented creators.'}
           </p>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {stores.map((store) => (
+          {(stores.length > 0 ? stores : defaultStores).map((store) => (
             <Card key={store.id} className="group hover-lift glass-card cursor-pointer overflow-hidden">
               <div className="relative">
                 <img 
@@ -102,7 +145,7 @@ const StoreShowcase = () => {
                   </div>
                 </div>
 
-                <Link to="/marketplace">
+                <Link to={store.id ? `/store/${store.id}` : "/marketplace"}>
                   <Button variant="apple" className="w-full">
                     Visit Store
                     <ExternalLink className="h-4 w-4 ml-2" />

@@ -1,9 +1,29 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Store, Users, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-glass-marketplace.jpg";
+import { supabase } from "@/integrations/supabase/client";
 
 const HeroSection = () => {
+  const [content, setContent] = useState<any>(null);
+
+  useEffect(() => {
+    fetchContent();
+  }, []);
+
+  const fetchContent = async () => {
+    const { data } = await supabase
+      .from('site_content')
+      .select('content')
+      .eq('section', 'hero')
+      .maybeSingle();
+    
+    if (data) setContent(data.content);
+  };
+
+  if (!content) return null;
+
   return (
     <section className="relative overflow-hidden bg-gradient-apple">
       <div className="absolute inset-0 bg-black/20"></div>
@@ -12,12 +32,11 @@ const HeroSection = () => {
           {/* Content */}
           <div className="text-white">
             <h1 className="text-4xl lg:text-6xl font-bold leading-tight mb-6">
-              Build Your
-              <span className="block text-accent"> Digital Store</span>
+              {content.title}
+              <span className="block text-accent"> {content.titleHighlight}</span>
             </h1>
             <p className="text-xl lg:text-2xl text-white/90 mb-8 leading-relaxed">
-              Experience the future of commerce with our glass-inspired platform. 
-              Create stunning online stores with Apple-quality design and seamless user experience.
+              {content.description}
             </p>
             
             {/* Stats */}
@@ -25,23 +44,23 @@ const HeroSection = () => {
               <div className="text-center">
                 <div className="flex items-center justify-center mb-2">
                   <Store className="h-6 w-6 text-accent mr-2" />
-                  <span className="text-2xl font-bold">50+</span>
+                  <span className="text-2xl font-bold">{content.stats.stores.value}</span>
                 </div>
-                <p className="text-sm text-white/80">Local Stores</p>
+                <p className="text-sm text-white/80">{content.stats.stores.label}</p>
               </div>
               <div className="text-center">
                 <div className="flex items-center justify-center mb-2">
                   <Users className="h-6 w-6 text-accent mr-2" />
-                  <span className="text-2xl font-bold">1000+</span>
+                  <span className="text-2xl font-bold">{content.stats.customers.value}</span>
                 </div>
-                <p className="text-sm text-white/80">Happy Customers</p>
+                <p className="text-sm text-white/80">{content.stats.customers.label}</p>
               </div>
               <div className="text-center">
                 <div className="flex items-center justify-center mb-2">
                   <TrendingUp className="h-6 w-6 text-accent mr-2" />
-                  <span className="text-2xl font-bold">85%</span>
+                  <span className="text-2xl font-bold">{content.stats.growth.value}</span>
                 </div>
-                <p className="text-sm text-white/80">Growth Rate</p>
+                <p className="text-sm text-white/80">{content.stats.growth.label}</p>
               </div>
             </div>
 

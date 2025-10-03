@@ -1,56 +1,49 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Store, ShoppingCart, CreditCard, BarChart3, Users, Shield } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+
+const iconMap: Record<string, any> = {
+  Store, ShoppingCart, CreditCard, BarChart3, Users, Shield
+};
 
 const FeaturesSection = () => {
-  const features = [
-    {
-      icon: Store,
-      title: "Easy Store Setup",
-      description: "Create your online store in minutes with our intuitive setup process. No technical skills required.",
-      color: "bg-primary"
-    },
-    {
-      icon: ShoppingCart,
-      title: "Product Management",
-      description: "Upload products, manage inventory, and organize your catalog with our powerful tools.",
-      color: "bg-secondary"
-    },
-    {
-      icon: CreditCard,
-      title: "Local Payments",
-      description: "Accept M-Pesa, mobile money, and bank transfers. Get paid instantly and securely.",
-      color: "bg-accent"
-    },
-    {
-      icon: BarChart3,
-      title: "Sales Analytics",
-      description: "Track your performance with detailed analytics and insights to grow your business.",
-      color: "bg-primary"
-    },
-    {
-      icon: Users,
-      title: "Customer Management",
-      description: "Build relationships with your customers through reviews, orders, and communication tools.",
-      color: "bg-secondary"
-    },
-    {
-      icon: Shield,
-      title: "Secure & Reliable",
-      description: "Your data is protected with enterprise-grade security. Focus on selling, we handle the rest.",
-      color: "bg-accent"
-    }
-  ];
+  const [content, setContent] = useState<any>(null);
+
+  useEffect(() => {
+    fetchContent();
+  }, []);
+
+  const fetchContent = async () => {
+    const { data } = await supabase
+      .from('site_content')
+      .select('content')
+      .eq('section', 'features')
+      .maybeSingle();
+    
+    if (data) setContent(data.content);
+  };
+
+  if (!content) return null;
+
+  const colors = ["bg-primary", "bg-secondary", "bg-accent"];
+
+  const features = content.items.map((item: any, index: number) => ({
+    icon: iconMap[item.icon] || Store,
+    title: item.title,
+    description: item.description,
+    color: colors[index % colors.length]
+  }));
 
   return (
     <section className="py-24 bg-muted/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
-            Everything You Need to Succeed
+            {content.title}
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Powerful features designed specifically for local businesses in emerging markets. 
-            Start selling online and reach customers beyond your village.
+            {content.subtitle}
           </p>
         </div>
 
