@@ -13,6 +13,7 @@ const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [selectedRole, setSelectedRole] = useState<'seller' | 'buyer'>('buyer');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -54,7 +55,7 @@ const Auth = () => {
           });
         }
       } else {
-        const { error } = await signUp(email, password, fullName);
+        const { error } = await signUp(email, password, fullName, selectedRole);
         if (error) {
           if (error.message.includes('User already registered')) {
             toast({
@@ -71,9 +72,13 @@ const Auth = () => {
             });
           }
         } else {
+          const roleMessage = selectedRole === 'seller' 
+            ? "Your 7-day free trial has started! Check your email to verify your account."
+            : "Please check your email to verify your account.";
+          
           toast({
             title: "Account Created!",
-            description: "Please check your email to verify your account.",
+            description: roleMessage,
           });
         }
       }
@@ -115,18 +120,47 @@ const Auth = () => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
-                <Input
-                  id="fullName"
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  required={!isLogin}
-                  className="glass border-white/20 bg-white/10 text-foreground placeholder:text-muted-foreground"
-                  placeholder="Enter your full name"
-                />
-              </div>
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Full Name</Label>
+                  <Input
+                    id="fullName"
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required={!isLogin}
+                    className="glass border-white/20 bg-white/10 text-foreground placeholder:text-muted-foreground"
+                    placeholder="Enter your full name"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>I want to:</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button
+                      type="button"
+                      variant={selectedRole === 'buyer' ? 'apple' : 'outline'}
+                      className={selectedRole === 'buyer' ? '' : 'glass border-white/20 hover:bg-white/10'}
+                      onClick={() => setSelectedRole('buyer')}
+                    >
+                      Buy Products
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={selectedRole === 'seller' ? 'apple' : 'outline'}
+                      className={selectedRole === 'seller' ? '' : 'glass border-white/20 hover:bg-white/10'}
+                      onClick={() => setSelectedRole('seller')}
+                    >
+                      Sell Products
+                    </Button>
+                  </div>
+                  {selectedRole === 'seller' && (
+                    <p className="text-xs text-muted-foreground text-center mt-2">
+                      ✨ Start with a 7-day free trial of our Pro plan!
+                    </p>
+                  )}
+                </div>
+              </>
             )}
 
             <div className="space-y-2">

@@ -213,7 +213,7 @@ const Admin = () => {
   const updateUserRole = async (userId: string, role: string) => {
     try {
       // Validate role type
-      if (role !== 'admin' && role !== 'seller' && role !== 'customer') {
+      if (role !== 'admin' && role !== 'seller' && role !== 'buyer') {
         toast({
           title: "Invalid role",
           description: "Please select a valid role.",
@@ -227,7 +227,7 @@ const Admin = () => {
         .from('user_roles')
         .select('*')
         .eq('user_id', userId)
-        .eq('role', role as 'admin' | 'seller' | 'customer')
+        .eq('role', role as 'admin' | 'seller' | 'buyer')
         .single();
 
       if (existingRole) {
@@ -242,7 +242,7 @@ const Admin = () => {
         .from('user_roles')
         .insert([{ 
           user_id: userId, 
-          role: role as 'admin' | 'seller' | 'customer'
+          role: role as 'admin' | 'seller' | 'buyer'
         }]);
 
       if (error) throw error;
@@ -265,7 +265,7 @@ const Admin = () => {
   const removeUserRole = async (userId: string, role: string) => {
     try {
       // Validate role type
-      if (role !== 'admin' && role !== 'seller' && role !== 'customer') {
+      if (role !== 'admin' && role !== 'seller' && role !== 'buyer') {
         toast({
           title: "Invalid role",
           description: "Please select a valid role.",
@@ -278,7 +278,7 @@ const Admin = () => {
         .from('user_roles')
         .delete()
         .eq('user_id', userId)
-        .eq('role', role as 'admin' | 'seller' | 'customer');
+        .eq('role', role as 'admin' | 'seller' | 'buyer');
 
       if (error) throw error;
 
@@ -643,7 +643,7 @@ const Admin = () => {
                                       </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <div className="space-y-4 my-4">
-                                      {['admin', 'seller', 'customer'].map((role) => {
+                                      {['admin', 'seller', 'buyer'].map((role) => {
                                         const hasRole = user.user_roles?.some(
                                           (r: any) => r.role === role
                                         );

@@ -6,7 +6,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName?: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, fullName?: string, role?: 'seller' | 'buyer') => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
@@ -46,19 +46,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, fullName?: string) => {
+  const signUp = async (email: string, password: string, fullName?: string, role: 'seller' | 'buyer' = 'buyer') => {
     const redirectUrl = `${window.location.origin}/`;
     
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: redirectUrl,
         data: {
           full_name: fullName,
+          role: role,
         },
       },
     });
+
+    // If signup successful and we have a user, assign the role
+    if (data.user && !error) {
+      // The role will be assigned via the handle_new_user_role trigger
+      // But we can also manually set it to ensure the selected role is used
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .update({ role: role })
+        .eq('user_id', data.user.id);
+      
+      if (roleError) {
+        console.error('Error updating user role:', roleError);
+      }
+    }
+
     return { error };
   };
 
