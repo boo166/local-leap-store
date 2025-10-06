@@ -149,13 +149,21 @@ const Dashboard = () => {
         
         <section className="py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-foreground mb-2">
-                Dashboard
-              </h1>
-              <p className="text-muted-foreground">
-                Manage your stores and track your business performance
-              </p>
+            <div className="mb-8 flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-foreground mb-2">
+                  Dashboard
+                </h1>
+                <p className="text-muted-foreground">
+                  Manage your stores and track your business performance
+                </p>
+              </div>
+              <Link to="/subscription">
+                <Button variant="outline">
+                  <Store className="h-4 w-4 mr-2" />
+                  Manage Subscription
+                </Button>
+              </Link>
             </div>
 
             {/* Stats Overview */}

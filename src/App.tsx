@@ -22,6 +22,7 @@ import EditProduct from "./pages/EditProduct";
 import Orders from "./pages/Orders";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
+import Subscription from "./pages/Subscription";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -54,6 +55,11 @@ const App = () => (
             <Route path="/edit-store/:storeId" element={<EditStore />} />
             <Route path="/edit-product/:productId" element={<EditProduct />} />
             <Route path="/orders" element={<Orders />} />
+            <Route path="/subscription" element={
+              <ProtectedRoute>
+                <Subscription />
+              </ProtectedRoute>
+            } />
             <Route path="/admin" element={<Admin />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
