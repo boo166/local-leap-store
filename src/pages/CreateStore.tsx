@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -8,16 +8,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Store } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ArrowLeft, Store, AlertTriangle, Crown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSubscription } from '@/hooks/useSubscription';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 const CreateStore = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const subscription = useSubscription();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -49,6 +52,17 @@ const CreateStore = () => {
         description: "Please sign in to create a store.",
         variant: "destructive",
       });
+      return;
+    }
+
+    // Check if user has active subscription
+    if (!subscription.hasActiveSubscription) {
+      toast({
+        title: "Subscription required",
+        description: "You need an active subscription to create a store.",
+        variant: "destructive",
+      });
+      navigate('/subscription');
       return;
     }
 
@@ -113,6 +127,24 @@ const CreateStore = () => {
               </CardHeader>
               
               <CardContent>
+                {!subscription.loading && !subscription.hasActiveSubscription && (
+                  <Alert className="mb-6 border-orange-500/50 bg-orange-500/10">
+                    <AlertTriangle className="h-4 w-4 text-orange-500" />
+                    <AlertDescription className="flex items-center justify-between">
+                      <span>You need an active subscription to create a store.</span>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => navigate('/subscription')}
+                        className="ml-4"
+                      >
+                        <Crown className="h-3 w-3 mr-1" />
+                        View Plans
+                      </Button>
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="space-y-2">
                     <Label htmlFor="name">Store Name *</Label>
@@ -195,10 +227,10 @@ const CreateStore = () => {
                     <Button
                       type="submit"
                       variant="apple"
-                      disabled={loading}
+                      disabled={loading || !subscription.hasActiveSubscription}
                       className="flex-1"
                     >
-                      {loading ? 'Creating...' : 'Create Store'}
+                      {loading ? 'Creating...' : !subscription.hasActiveSubscription ? 'Subscription Required' : 'Create Store'}
                     </Button>
                   </div>
                 </form>

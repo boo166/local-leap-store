@@ -8,10 +8,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Package } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ArrowLeft, Package, AlertTriangle, Crown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSubscription } from '@/hooks/useSubscription';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 interface Store {
@@ -23,8 +25,10 @@ const AddProduct = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const subscription = useSubscription();
   const [loading, setLoading] = useState(false);
   const [stores, setStores] = useState<Store[]>([]);
+  const [canAdd, setCanAdd] = useState<boolean | null>(null);
   const [formData, setFormData] = useState({
     store_id: '',
     name: '',
@@ -37,7 +41,13 @@ const AddProduct = () => {
 
   useEffect(() => {
     fetchUserStores();
+    checkProductLimit();
   }, [user]);
+
+  const checkProductLimit = async () => {
+    const allowed = await subscription.canAddProduct();
+    setCanAdd(allowed);
+  };
 
   const fetchUserStores = async () => {
     if (!user) return;
@@ -83,6 +93,18 @@ const AddProduct = () => {
         description: "Please sign in to add products.",
         variant: "destructive",
       });
+      return;
+    }
+
+    // Check product limit before adding
+    const allowed = await subscription.canAddProduct();
+    if (!allowed) {
+      toast({
+        title: "Product limit reached",
+        description: "Please upgrade your subscription to add more products.",
+        variant: "destructive",
+      });
+      navigate('/subscription');
       return;
     }
 
@@ -179,6 +201,24 @@ const AddProduct = () => {
               </CardHeader>
               
               <CardContent>
+                {!subscription.loading && canAdd === false && (
+                  <Alert className="mb-6 border-orange-500/50 bg-orange-500/10">
+                    <AlertTriangle className="h-4 w-4 text-orange-500" />
+                    <AlertDescription className="flex items-center justify-between">
+                      <span>You've reached your product limit. Upgrade to add more products.</span>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => navigate('/subscription')}
+                        className="ml-4"
+                      >
+                        <Crown className="h-3 w-3 mr-1" />
+                        Upgrade
+                      </Button>
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="space-y-2">
                     <Label htmlFor="store_id">Select Store *</Label>
@@ -297,10 +337,10 @@ const AddProduct = () => {
                     <Button
                       type="submit"
                       variant="apple"
-                      disabled={loading}
+                      disabled={loading || canAdd === false}
                       className="flex-1"
                     >
-                      {loading ? 'Adding...' : 'Add Product'}
+                      {loading ? 'Adding...' : canAdd === false ? 'Limit Reached' : 'Add Product'}
                     </Button>
                   </div>
                 </form>

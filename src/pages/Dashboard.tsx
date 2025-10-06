@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Store, 
   Package, 
@@ -14,11 +15,14 @@ import {
   Plus,
   Eye,
   Edit,
-  MoreHorizontal
+  Crown,
+  AlertTriangle,
+  Clock
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSubscription } from '@/hooks/useSubscription';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 interface StoreData {
@@ -49,6 +53,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
+  const subscription = useSubscription();
 
   useEffect(() => {
     if (user) {
@@ -165,6 +170,41 @@ const Dashboard = () => {
                 </Button>
               </Link>
             </div>
+
+            {/* Subscription Status Alert */}
+            {!subscription.loading && subscription.isTrial && (
+              <Alert className="mb-6 border-accent/50 bg-accent/10">
+                <Clock className="h-4 w-4 text-accent" />
+                <AlertDescription className="flex items-center justify-between">
+                  <span>
+                    Trial ends in {subscription.daysRemaining} days. 
+                    {subscription.maxProducts && ` Current limit: ${products.length}/${subscription.maxProducts} products`}
+                  </span>
+                  <Link to="/subscription">
+                    <Button variant="outline" size="sm">
+                      <Crown className="h-3 w-3 mr-1" />
+                      Upgrade Now
+                    </Button>
+                  </Link>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {!subscription.loading && subscription.isExpired && (
+              <Alert className="mb-6 border-destructive/50 bg-destructive/10">
+                <AlertTriangle className="h-4 w-4 text-destructive" />
+                <AlertDescription className="flex items-center justify-between">
+                  <span>Your subscription has expired. Upgrade to continue using all features.</span>
+                  <Link to="/subscription">
+                    <Button variant="destructive" size="sm">
+                      <Crown className="h-3 w-3 mr-1" />
+                      Renew Plan
+                    </Button>
+                  </Link>
+                </AlertDescription>
+              </Alert>
+            )}
+
 
             {/* Stats Overview */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
