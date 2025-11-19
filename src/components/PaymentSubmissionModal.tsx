@@ -37,17 +37,87 @@ const PaymentSubmissionModal: React.FC<PaymentSubmissionModalProps> = ({
 }) => {
   const [transactionId, setTransactionId] = useState('');
   const [screenshotUrl, setScreenshotUrl] = useState('');
+  const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Invalid file type",
+          description: "Please upload an image file",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Please upload an image smaller than 5MB",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setScreenshotFile(file);
+      setScreenshotUrl(''); // Clear URL if file is selected
+    }
+  };
+
+  const uploadScreenshot = async (): Promise<string | null> => {
+    if (!screenshotFile || !user) return null;
+
+    setUploading(true);
+    try {
+      const fileExt = screenshotFile.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('payment-screenshots')
+        .upload(fileName, screenshotFile);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from('payment-screenshots')
+        .getPublicUrl(fileName);
+
+      return data.publicUrl;
+    } catch (error: any) {
+      toast({
+        title: "Upload failed",
+        description: error.message,
+        variant: "destructive",
+      });
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!transactionId.trim() || !screenshotUrl.trim()) {
+    if (!transactionId.trim()) {
       toast({
         title: "Missing information",
-        description: "Please provide both transaction ID and screenshot URL",
+        description: "Please provide transaction ID",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!screenshotFile && !screenshotUrl.trim()) {
+      toast({
+        title: "Missing screenshot",
+        description: "Please upload a screenshot or provide a URL",
         variant: "destructive",
       });
       return;
@@ -56,6 +126,16 @@ const PaymentSubmissionModal: React.FC<PaymentSubmissionModalProps> = ({
     setSubmitting(true);
 
     try {
+      // Upload file if provided
+      let finalScreenshotUrl = screenshotUrl.trim();
+      if (screenshotFile) {
+        const uploadedUrl = await uploadScreenshot();
+        if (!uploadedUrl) {
+          setSubmitting(false);
+          return;
+        }
+        finalScreenshotUrl = uploadedUrl;
+      }
       const amount = billingCycle === 'monthly' ? plan.price_monthly : plan.price_yearly;
 
       // Get or create subscription
@@ -96,7 +176,7 @@ const PaymentSubmissionModal: React.FC<PaymentSubmissionModalProps> = ({
           amount: amount,
           billing_cycle: billingCycle,
           transaction_id: transactionId.trim(),
-          screenshot_url: screenshotUrl.trim(),
+          screenshot_url: finalScreenshotUrl,
           status: 'pending',
         });
 
@@ -109,6 +189,7 @@ const PaymentSubmissionModal: React.FC<PaymentSubmissionModalProps> = ({
 
       setTransactionId('');
       setScreenshotUrl('');
+      setScreenshotFile(null);
       onSuccess();
       onClose();
     } catch (error: any) {
@@ -151,19 +232,58 @@ const PaymentSubmissionModal: React.FC<PaymentSubmissionModalProps> = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="screenshot-url">Payment Screenshot URL</Label>
-            <Input
-              id="screenshot-url"
-              type="url"
-              placeholder="https://example.com/screenshot.jpg"
-              value={screenshotUrl}
-              onChange={(e) => setScreenshotUrl(e.target.value)}
-              required
-              disabled={submitting}
-            />
-            <p className="text-xs text-muted-foreground">
-              Upload your screenshot to any image hosting service (e.g., Imgur, ImgBB) and paste the URL here
-            </p>
+            <Label htmlFor="screenshot">Payment Screenshot *</Label>
+            <div className="space-y-3">
+              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
+                <input
+                  id="screenshot-file"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                  disabled={submitting || uploading}
+                />
+                <label
+                  htmlFor="screenshot-file"
+                  className="cursor-pointer flex flex-col items-center gap-2"
+                >
+                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                    <Upload className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">
+                      {screenshotFile ? screenshotFile.name : 'Click to upload screenshot'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      PNG, JPG up to 5MB
+                    </p>
+                  </div>
+                </label>
+              </div>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">
+                    Or paste URL
+                  </span>
+                </div>
+              </div>
+
+              <Input
+                id="screenshot-url"
+                type="url"
+                value={screenshotUrl}
+                onChange={(e) => {
+                  setScreenshotUrl(e.target.value);
+                  if (e.target.value) setScreenshotFile(null);
+                }}
+                placeholder="https://example.com/screenshot.jpg"
+                disabled={!!screenshotFile || submitting}
+              />
+            </div>
           </div>
 
           <div className="bg-muted/50 p-4 rounded-lg space-y-2">
@@ -171,8 +291,8 @@ const PaymentSubmissionModal: React.FC<PaymentSubmissionModalProps> = ({
             <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
               <li>Send {price} {plan.currency} to Vodafone Cash: <strong className="text-foreground">01234567890</strong></li>
               <li>Take a clear screenshot of the payment confirmation</li>
-              <li>Upload the screenshot to an image hosting service</li>
-              <li>Paste the image URL and transaction ID above</li>
+              <li>Upload the screenshot above or paste image URL</li>
+              <li>Enter the transaction ID and submit</li>
             </ol>
           </div>
 
@@ -181,7 +301,7 @@ const PaymentSubmissionModal: React.FC<PaymentSubmissionModalProps> = ({
               type="button"
               variant="outline"
               onClick={onClose}
-              disabled={submitting}
+              disabled={submitting || uploading}
               className="flex-1"
             >
               Cancel
@@ -189,13 +309,13 @@ const PaymentSubmissionModal: React.FC<PaymentSubmissionModalProps> = ({
             <Button
               type="submit"
               variant="apple"
-              disabled={submitting}
+              disabled={submitting || uploading}
               className="flex-1"
             >
-              {submitting ? (
+              {submitting || uploading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Submitting...
+                  {uploading ? 'Uploading...' : 'Submitting...'}
                 </>
               ) : (
                 <>
