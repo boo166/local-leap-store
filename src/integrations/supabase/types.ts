@@ -475,10 +475,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      can_add_product: {
-        Args: { user_id_param: string }
-        Returns: boolean
-      }
+      can_add_product: { Args: { user_id_param: string }; Returns: boolean }
       get_user_subscription_status: {
         Args: { user_id_param: string }
         Returns: {
@@ -498,10 +495,7 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_admin: {
-        Args: { _user_id: string }
-        Returns: boolean
-      }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "seller" | "buyer"

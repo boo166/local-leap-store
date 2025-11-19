@@ -45,6 +45,10 @@ import {
   Eye,
   ToggleLeft,
   ToggleRight,
+  CreditCard,
+  Check,
+  X,
+  ExternalLink,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -56,6 +60,7 @@ const Admin = () => {
   const [products, setProducts] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
+  const [payments, setPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('stores');
   const { toast } = useToast();
@@ -72,6 +77,7 @@ const Admin = () => {
         fetchProducts(),
         fetchOrders(),
         fetchUsers(),
+        fetchPayments(),
       ]);
     } catch (error: any) {
       toast({
@@ -136,6 +142,20 @@ const Admin = () => {
 
     if (error) throw error;
     setUsers(data || []);
+  };
+
+  const fetchPayments = async () => {
+    const { data, error } = await supabase
+      .from('payment_submissions')
+      .select(`
+        *,
+        profiles!payment_submissions_user_id_fkey(full_name, email),
+        subscription_plans!payment_submissions_plan_id_fkey(name, price_monthly, price_yearly)
+      `)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    setPayments(data || []);
   };
 
   const toggleStoreStatus = async (storeId: string, currentStatus: boolean) => {
@@ -297,6 +317,94 @@ const Admin = () => {
     }
   };
 
+  const approvePayment = async (paymentId: string, subscriptionId: string, billingCycle: string) => {
+    try {
+      const { data: authData } = await supabase.auth.getUser();
+      if (!authData.user) throw new Error('Not authenticated');
+
+      // Calculate period dates based on billing cycle
+      const now = new Date();
+      const periodStart = now;
+      const periodEnd = new Date(now);
+      
+      if (billingCycle === 'monthly') {
+        periodEnd.setMonth(periodEnd.getMonth() + 1);
+      } else {
+        periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+      }
+
+      // Update payment submission status
+      const { error: paymentError } = await supabase
+        .from('payment_submissions')
+        .update({
+          status: 'approved',
+          reviewed_by: authData.user.id,
+          reviewed_at: new Date().toISOString(),
+        })
+        .eq('id', paymentId);
+
+      if (paymentError) throw paymentError;
+
+      // Update subscription status
+      const { error: subscriptionError } = await supabase
+        .from('user_subscriptions')
+        .update({
+          status: 'active',
+          current_period_start: periodStart.toISOString(),
+          current_period_end: periodEnd.toISOString(),
+          trial_end_date: null,
+        })
+        .eq('id', subscriptionId);
+
+      if (subscriptionError) throw subscriptionError;
+
+      toast({
+        title: "Payment approved",
+        description: "Subscription has been activated successfully.",
+      });
+
+      fetchPayments();
+    } catch (error: any) {
+      toast({
+        title: "Error approving payment",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const rejectPayment = async (paymentId: string, adminNotes: string) => {
+    try {
+      const { data: authData } = await supabase.auth.getUser();
+      if (!authData.user) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('payment_submissions')
+        .update({
+          status: 'rejected',
+          reviewed_by: authData.user.id,
+          reviewed_at: new Date().toISOString(),
+          admin_notes: adminNotes,
+        })
+        .eq('id', paymentId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Payment rejected",
+        description: "User has been notified of the rejection.",
+      });
+
+      fetchPayments();
+    } catch (error: any) {
+      toast({
+        title: "Error rejecting payment",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -351,7 +459,7 @@ const Admin = () => {
             </div>
 
             {/* Stats Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
               <Card className="glass-card">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Stores</CardTitle>
@@ -403,15 +511,29 @@ const Admin = () => {
                   </p>
                 </CardContent>
               </Card>
+
+              <Card className="glass-card">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Payments</CardTitle>
+                  <CreditCard className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{payments.length}</div>
+                  <p className="text-xs text-muted-foreground">
+                    {payments.filter(p => p.status === 'pending').length} pending review
+                  </p>
+                </CardContent>
+              </Card>
             </div>
 
             {/* Main Content */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-              <TabsList className="grid w-full grid-cols-5">
+              <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="stores">Stores</TabsTrigger>
                 <TabsTrigger value="products">Products</TabsTrigger>
                 <TabsTrigger value="orders">Orders</TabsTrigger>
                 <TabsTrigger value="users">Users</TabsTrigger>
+                <TabsTrigger value="payments">Payments</TabsTrigger>
                 <TabsTrigger value="content">Site Content</TabsTrigger>
               </TabsList>
 
@@ -583,6 +705,151 @@ const Admin = () => {
                         ))}
                       </TableBody>
                     </Table>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Payments Tab */}
+              <TabsContent value="payments" className="space-y-4">
+                <Card className="glass-card">
+                  <CardHeader>
+                    <CardTitle>Payment Submissions</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>User</TableHead>
+                          <TableHead>Plan</TableHead>
+                          <TableHead>Amount</TableHead>
+                          <TableHead>Billing Cycle</TableHead>
+                          <TableHead>Transaction ID</TableHead>
+                          <TableHead>Screenshot</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {payments.map((payment) => (
+                          <TableRow key={payment.id}>
+                            <TableCell>
+                              <div>
+                                <div className="font-medium">{payment.profiles?.full_name || 'Unknown'}</div>
+                                <div className="text-xs text-muted-foreground">{payment.profiles?.email}</div>
+                              </div>
+                            </TableCell>
+                            <TableCell>{payment.subscription_plans?.name}</TableCell>
+                            <TableCell>
+                              {formatPrice(payment.amount)}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">
+                                {payment.billing_cycle}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="font-mono text-xs">{payment.transaction_id}</TableCell>
+                            <TableCell>
+                              <a 
+                                href={payment.screenshot_url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1 text-primary hover:underline"
+                              >
+                                View <ExternalLink className="h-3 w-3" />
+                              </a>
+                            </TableCell>
+                            <TableCell>
+                              <Badge 
+                                variant={
+                                  payment.status === 'approved' ? 'default' :
+                                  payment.status === 'rejected' ? 'destructive' :
+                                  'secondary'
+                                }
+                              >
+                                {payment.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{formatDate(payment.created_at)}</TableCell>
+                            <TableCell>
+                              {payment.status === 'pending' && (
+                                <div className="flex gap-2">
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button variant="outline" size="sm" className="text-green-600">
+                                        <Check className="h-3 w-3" />
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>Approve Payment</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          This will activate the user's subscription. Make sure you've verified the payment proof.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction
+                                          onClick={() => approvePayment(payment.id, payment.subscription_id, payment.billing_cycle)}
+                                        >
+                                          Approve
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button variant="outline" size="sm" className="text-red-600">
+                                        <X className="h-3 w-3" />
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>Reject Payment</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          Provide a reason for rejecting this payment submission.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <div className="my-4">
+                                        <Label htmlFor="admin-notes">Rejection Reason</Label>
+                                        <Input
+                                          id="admin-notes"
+                                          placeholder="e.g., Invalid transaction ID, screenshot unclear..."
+                                          className="mt-2"
+                                        />
+                                      </div>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction
+                                          className="bg-destructive text-destructive-foreground"
+                                          onClick={() => {
+                                            const notes = (document.getElementById('admin-notes') as HTMLInputElement)?.value || 'No reason provided';
+                                            rejectPayment(payment.id, notes);
+                                          }}
+                                        >
+                                          Reject
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </div>
+                              )}
+                              {payment.status !== 'pending' && (
+                                <span className="text-xs text-muted-foreground">
+                                  {payment.status === 'approved' ? 'Approved' : 'Rejected'}
+                                </span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                    {payments.length === 0 && (
+                      <div className="text-center py-8 text-muted-foreground">
+                        No payment submissions yet
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
