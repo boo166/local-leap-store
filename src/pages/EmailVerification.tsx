@@ -55,17 +55,37 @@ const EmailVerification = () => {
   }, [searchParams, toast]);
 
   const resendVerificationEmail = async () => {
-    try {
-      // This would require the user's email, which we might not have in this context
+    const email = searchParams.get('email');
+    
+    if (!email) {
       toast({
-        title: "Resend not available",
+        title: "Email required",
         description: "Please sign up again to receive a new verification email.",
         variant: "destructive",
+      });
+      navigate('/auth');
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Verification email sent",
+        description: "Please check your inbox for the verification link.",
       });
     } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to resend verification email.",
+        description: error.message || "Failed to resend verification email.",
         variant: "destructive",
       });
     }
