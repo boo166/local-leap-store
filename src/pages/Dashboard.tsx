@@ -17,7 +17,8 @@ import {
   Edit,
   Crown,
   AlertTriangle,
-  Clock
+  Clock,
+  ShoppingBag
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -163,12 +164,20 @@ const Dashboard = () => {
                   Manage your stores and track your business performance
                 </p>
               </div>
-              <Link to="/subscription">
-                <Button variant="outline">
-                  <Store className="h-4 w-4 mr-2" />
-                  Manage Subscription
-                </Button>
-              </Link>
+              <div className="flex gap-2">
+                <Link to="/seller/orders">
+                  <Button variant="outline">
+                    <ShoppingBag className="h-4 w-4 mr-2" />
+                    Manage Orders
+                  </Button>
+                </Link>
+                <Link to="/subscription">
+                  <Button variant="outline">
+                    <Store className="h-4 w-4 mr-2" />
+                    Subscription
+                  </Button>
+                </Link>
+              </div>
             </div>
 
             {/* Subscription Status Alert */}

@@ -102,27 +102,33 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          seller_notes: string | null
           shipping_address: string | null
           status: string
           total_amount: number
+          tracking_number: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
+          seller_notes?: string | null
           shipping_address?: string | null
           status?: string
           total_amount: number
+          tracking_number?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
+          seller_notes?: string | null
           shipping_address?: string | null
           status?: string
           total_amount?: number
+          tracking_number?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -496,6 +502,10 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_seller_of_order: {
+        Args: { _order_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "seller" | "buyer"

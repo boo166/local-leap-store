@@ -1,0 +1,320 @@
+import React, { useState } from 'react';
+import Navigation from '@/components/Navigation';
+import Footer from '@/components/Footer';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Package, Truck, CheckCircle, XCircle, Clock, Edit } from 'lucide-react';
+import { useSellerOrders } from '@/hooks/useSellerOrders';
+import ProtectedRoute from '@/components/ProtectedRoute';
+
+const SellerOrders = () => {
+  const { orders, loading, updateOrderStatus, updateTrackingInfo } = useSellerOrders();
+  const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
+  const [trackingNumber, setTrackingNumber] = useState('');
+  const [sellerNotes, setSellerNotes] = useState('');
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(price);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-yellow-500';
+      case 'processing':
+        return 'bg-blue-500';
+      case 'shipped':
+        return 'bg-purple-500';
+      case 'delivered':
+        return 'bg-green-500';
+      case 'cancelled':
+        return 'bg-red-500';
+      default:
+        return 'bg-gray-500';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return <Clock className="h-4 w-4" />;
+      case 'processing':
+        return <Package className="h-4 w-4" />;
+      case 'shipped':
+        return <Truck className="h-4 w-4" />;
+      case 'delivered':
+        return <CheckCircle className="h-4 w-4" />;
+      case 'cancelled':
+        return <XCircle className="h-4 w-4" />;
+      default:
+        return <Package className="h-4 w-4" />;
+    }
+  };
+
+  const handleUpdateTracking = (orderId: string) => {
+    setSelectedOrder(orderId);
+    const order = orders.find(o => o.id === orderId);
+    if (order) {
+      setTrackingNumber(order.tracking_number || '');
+      setSellerNotes(order.seller_notes || '');
+    }
+    setDialogOpen(true);
+  };
+
+  const handleSaveTracking = async () => {
+    if (!selectedOrder) return;
+    await updateTrackingInfo(selectedOrder, trackingNumber, sellerNotes);
+    setDialogOpen(false);
+    setSelectedOrder(null);
+    setTrackingNumber('');
+    setSellerNotes('');
+  };
+
+  if (loading) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen bg-background">
+          <Navigation />
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="glass rounded-xl p-8">
+              <div className="animate-pulse text-center space-y-4">
+                <div className="w-12 h-12 bg-primary/20 rounded-full mx-auto animate-bounce"></div>
+                <p className="text-muted-foreground">Loading orders...</p>
+              </div>
+            </div>
+          </div>
+          <Footer />
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
+  return (
+    <ProtectedRoute>
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        
+        <section className="py-12">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-foreground mb-2">
+                Manage Orders
+              </h1>
+              <p className="text-muted-foreground">
+                View and manage orders for your products
+              </p>
+            </div>
+
+            {orders.length === 0 ? (
+              <Card className="glass-card">
+                <CardContent className="text-center py-12">
+                  <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No orders yet</h3>
+                  <p className="text-muted-foreground">
+                    Orders for your products will appear here
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-6">
+                {orders.map((order) => (
+                  <Card key={order.id} className="glass-card">
+                    <CardHeader>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle className="text-lg mb-2">
+                            Order #{order.id.slice(0, 8)}
+                          </CardTitle>
+                          <p className="text-sm text-muted-foreground">
+                            {new Date(order.created_at).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
+                            })}
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Customer: {order.profiles?.full_name || order.profiles?.email}
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-end gap-2">
+                          <Badge className={getStatusColor(order.status)}>
+                            <span className="flex items-center gap-1">
+                              {getStatusIcon(order.status)}
+                              {order.status}
+                            </span>
+                          </Badge>
+                          <Select
+                            value={order.status}
+                            onValueChange={(value) => updateOrderStatus(order.id, value)}
+                          >
+                            <SelectTrigger className="w-[140px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pending">Pending</SelectItem>
+                              <SelectItem value="processing">Processing</SelectItem>
+                              <SelectItem value="shipped">Shipped</SelectItem>
+                              <SelectItem value="delivered">Delivered</SelectItem>
+                              <SelectItem value="cancelled">Cancelled</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </CardHeader>
+
+                    <CardContent>
+                      <div className="space-y-4">
+                        {/* Order Items */}
+                        <div>
+                          <h4 className="font-semibold mb-3">Items</h4>
+                          <div className="space-y-2">
+                            {order.order_items.map((item) => (
+                              <div key={item.id} className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg">
+                                <img
+                                  src={item.products?.image_url || '/placeholder.svg'}
+                                  alt={item.products?.name}
+                                  className="w-16 h-16 object-cover rounded"
+                                />
+                                <div className="flex-1">
+                                  <p className="font-medium">{item.products?.name}</p>
+                                  <p className="text-sm text-muted-foreground">
+                                    Quantity: {item.quantity}
+                                  </p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="font-semibold">
+                                    {formatPrice(item.price_at_time * item.quantity)}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground">
+                                    {formatPrice(item.price_at_time)} each
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Shipping & Tracking */}
+                        <div className="grid md:grid-cols-2 gap-4 pt-4 border-t">
+                          <div>
+                            <h4 className="font-semibold mb-2">Shipping Address</h4>
+                            <p className="text-sm text-muted-foreground whitespace-pre-line">
+                              {order.shipping_address || 'No address provided'}
+                            </p>
+                          </div>
+                          <div>
+                            <div className="flex justify-between items-start mb-2">
+                              <h4 className="font-semibold">Tracking Info</h4>
+                              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                                <DialogTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleUpdateTracking(order.id)}
+                                  >
+                                    <Edit className="h-3 w-3 mr-1" />
+                                    Edit
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                  <DialogHeader>
+                                    <DialogTitle>Update Tracking Information</DialogTitle>
+                                    <DialogDescription>
+                                      Add or update tracking number and notes for this order
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  <div className="space-y-4 py-4">
+                                    <div className="space-y-2">
+                                      <Label htmlFor="tracking">Tracking Number</Label>
+                                      <Input
+                                        id="tracking"
+                                        value={trackingNumber}
+                                        onChange={(e) => setTrackingNumber(e.target.value)}
+                                        placeholder="Enter tracking number"
+                                      />
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label htmlFor="notes">Seller Notes</Label>
+                                      <Textarea
+                                        id="notes"
+                                        value={sellerNotes}
+                                        onChange={(e) => setSellerNotes(e.target.value)}
+                                        placeholder="Add any notes for the customer"
+                                        rows={3}
+                                      />
+                                    </div>
+                                    <Button onClick={handleSaveTracking} className="w-full">
+                                      Save Changes
+                                    </Button>
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
+                            </div>
+                            {order.tracking_number ? (
+                              <div className="space-y-1">
+                                <p className="text-sm">
+                                  <span className="font-medium">Tracking:</span>{' '}
+                                  {order.tracking_number}
+                                </p>
+                                {order.seller_notes && (
+                                  <p className="text-sm text-muted-foreground">
+                                    {order.seller_notes}
+                                  </p>
+                                )}
+                              </div>
+                            ) : (
+                              <p className="text-sm text-muted-foreground">
+                                No tracking information yet
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Total */}
+                        <div className="flex justify-end pt-4 border-t">
+                          <div className="text-right">
+                            <p className="text-sm text-muted-foreground mb-1">Total Amount</p>
+                            <p className="text-2xl font-bold text-primary">
+                              {formatPrice(order.total_amount)}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+
+        <Footer />
+      </div>
+    </ProtectedRoute>
+  );
+};
+
+export default SellerOrders;
