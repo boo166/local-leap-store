@@ -20,6 +20,7 @@ import AddProduct from "./pages/AddProduct";
 import EditStore from "./pages/EditStore";
 import EditProduct from "./pages/EditProduct";
 import Orders from "./pages/Orders";
+import SellerOrders from "./pages/SellerOrders";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
 import Subscription from "./pages/Subscription";
@@ -55,6 +56,11 @@ const App = () => (
             <Route path="/edit-store/:storeId" element={<EditStore />} />
             <Route path="/edit-product/:productId" element={<EditProduct />} />
             <Route path="/orders" element={<Orders />} />
+            <Route path="/seller/orders" element={
+              <ProtectedRoute>
+                <SellerOrders />
+              </ProtectedRoute>
+            } />
             <Route path="/subscription" element={
               <ProtectedRoute>
                 <Subscription />
