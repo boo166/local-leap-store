@@ -3,8 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import StarRating from '@/components/StarRating';
-import { ThumbsUp, ShieldCheck } from 'lucide-react';
+import { ThumbsUp, ShieldCheck, Image as ImageIcon } from 'lucide-react';
 import { Review } from '@/hooks/useProductReviews';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 
 interface ReviewListProps {
   reviews: Review[];
@@ -64,6 +65,34 @@ const ReviewList = ({ reviews, onMarkHelpful }: ReviewListProps) => {
                 <p className="text-sm text-foreground leading-relaxed">
                   {review.review_text}
                 </p>
+              )}
+
+              {review.review_images && (review.review_images as string[]).length > 0 && (
+                <div className="flex gap-2 mt-3">
+                  {(review.review_images as string[]).map((imageUrl, index) => (
+                    <Dialog key={index}>
+                      <DialogTrigger asChild>
+                        <button className="relative group">
+                          <img
+                            src={imageUrl}
+                            alt={`Review image ${index + 1}`}
+                            className="h-20 w-20 object-cover rounded-lg border border-border hover:opacity-80 transition-opacity cursor-pointer"
+                          />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                            <ImageIcon className="h-5 w-5 text-white" />
+                          </div>
+                        </button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-3xl">
+                        <img
+                          src={imageUrl}
+                          alt={`Review image ${index + 1}`}
+                          className="w-full h-auto rounded-lg"
+                        />
+                      </DialogContent>
+                    </Dialog>
+                  ))}
+                </div>
               )}
 
               <div className="flex items-center gap-2 pt-2">

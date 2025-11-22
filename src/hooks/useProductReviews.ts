@@ -9,6 +9,7 @@ export interface Review {
   user_id: string;
   rating: number;
   review_text: string | null;
+  review_images?: any;
   verified_purchase: boolean;
   helpful_count: number;
   is_approved: boolean;
@@ -154,7 +155,7 @@ export const useProductReviews = (productId: string) => {
     }
   };
 
-  const submitReview = async (rating: number, reviewText: string) => {
+  const submitReview = async (rating: number, reviewText: string, imageUrls: string[] = []) => {
     if (!user) {
       toast({
         title: "Authentication required",
@@ -173,6 +174,7 @@ export const useProductReviews = (productId: string) => {
             user_id: user.id,
             rating,
             review_text: reviewText,
+            review_images: imageUrls,
             verified_purchase: canReview,
           },
         ]);

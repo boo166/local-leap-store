@@ -49,11 +49,13 @@ import {
   Check,
   X,
   ExternalLink,
+  MessageSquare,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import AdminRoute from '@/components/AdminRoute';
 import SiteContentManager from '@/components/SiteContentManager';
+import AdminReviewModeration from '@/components/AdminReviewModeration';
 
 const Admin = () => {
   const [stores, setStores] = useState<any[]>([]);
@@ -528,13 +530,14 @@ const Admin = () => {
 
             {/* Main Content */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-              <TabsList className="grid w-full grid-cols-6">
+              <TabsList className="grid w-full grid-cols-7">
                 <TabsTrigger value="stores">Stores</TabsTrigger>
                 <TabsTrigger value="products">Products</TabsTrigger>
                 <TabsTrigger value="orders">Orders</TabsTrigger>
                 <TabsTrigger value="users">Users</TabsTrigger>
                 <TabsTrigger value="payments">Payments</TabsTrigger>
-                <TabsTrigger value="content">Site Content</TabsTrigger>
+                <TabsTrigger value="reviews">Reviews</TabsTrigger>
+                <TabsTrigger value="content">Content</TabsTrigger>
               </TabsList>
 
               {/* Stores Tab */}
@@ -852,6 +855,11 @@ const Admin = () => {
                     )}
                   </CardContent>
                 </Card>
+              </TabsContent>
+
+              {/* Reviews Tab */}
+              <TabsContent value="reviews" className="space-y-4">
+                <AdminReviewModeration />
               </TabsContent>
 
               {/* Site Content Tab */}

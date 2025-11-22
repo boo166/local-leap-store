@@ -296,6 +296,7 @@ export type Database = {
           is_approved: boolean | null
           product_id: string
           rating: number
+          review_images: Json | null
           review_text: string | null
           updated_at: string
           user_id: string
@@ -308,6 +309,7 @@ export type Database = {
           is_approved?: boolean | null
           product_id: string
           rating: number
+          review_images?: Json | null
           review_text?: string | null
           updated_at?: string
           user_id: string
@@ -320,6 +322,7 @@ export type Database = {
           is_approved?: boolean | null
           product_id?: string
           rating?: number
+          review_images?: Json | null
           review_text?: string | null
           updated_at?: string
           user_id?: string
