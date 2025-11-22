@@ -45,7 +45,7 @@ export const useSubscription = () => {
       try {
         const { data, error } = await supabase
           .rpc('get_user_subscription_status', { user_id_param: user.id })
-          .single();
+          .maybeSingle();
 
         if (error) throw error;
 
@@ -58,6 +58,18 @@ export const useSubscription = () => {
             planName: data.plan_name,
             maxProducts: data.max_products,
             hasAnalytics: data.has_analytics,
+            loading: false,
+          });
+        } else {
+          // No subscription found - set defaults
+          setStatus({
+            hasActiveSubscription: false,
+            isTrial: false,
+            isExpired: false,
+            daysRemaining: 0,
+            planName: null,
+            maxProducts: null,
+            hasAnalytics: false,
             loading: false,
           });
         }

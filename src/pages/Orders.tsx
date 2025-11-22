@@ -17,6 +17,8 @@ interface Order {
   total_amount: number;
   status: string;
   shipping_address: string;
+  tracking_number: string | null;
+  seller_notes: string | null;
   created_at: string;
   order_items: {
     id: string;
@@ -209,6 +211,18 @@ const Orders = () => {
                           <div className="text-sm">
                             <span className="text-muted-foreground">Shipping to: </span>
                             <span className="text-foreground">{order.shipping_address}</span>
+                          </div>
+                        )}
+                        {order.tracking_number && (
+                          <div className="text-sm">
+                            <span className="text-muted-foreground">Tracking Number: </span>
+                            <span className="text-foreground font-mono">{order.tracking_number}</span>
+                          </div>
+                        )}
+                        {order.seller_notes && (
+                          <div className="text-sm">
+                            <span className="text-muted-foreground">Seller Notes: </span>
+                            <span className="text-foreground">{order.seller_notes}</span>
                           </div>
                         )}
                         <div className="flex justify-between items-center font-bold text-lg">
