@@ -13,6 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Package, AlertTriangle, Crown, Upload, X, Plus, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import type { TablesInsert } from '@/integrations/supabase/types';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -189,25 +190,27 @@ const AddProduct = () => {
 
     setLoading(true);
     try {
+      const productData: TablesInsert<'products'> = {
+        store_id: formData.store_id,
+        name: formData.name,
+        description: formData.description,
+        price: parseFloat(formData.price),
+        category: formData.category,
+        inventory_count: parseInt(formData.inventory_count),
+        image_url: formData.image_url,
+        images: formData.images as any,
+        sku: formData.sku || null,
+        tags: formData.tags,
+        variants: formData.variants as any,
+        low_stock_threshold: parseInt(formData.low_stock_threshold),
+        weight: formData.weight ? parseFloat(formData.weight) : null,
+        dimensions: formData.dimensions.length ? (formData.dimensions as any) : null,
+        is_active: true
+      };
+
       const { error } = await supabase
         .from('products')
-        .insert({
-          store_id: formData.store_id,
-          name: formData.name,
-          description: formData.description,
-          price: parseFloat(formData.price),
-          category: formData.category,
-          inventory_count: parseInt(formData.inventory_count),
-          image_url: formData.image_url,
-          images: formData.images,
-          sku: formData.sku || null,
-          tags: formData.tags,
-          variants: formData.variants,
-          low_stock_threshold: parseInt(formData.low_stock_threshold),
-          weight: formData.weight ? parseFloat(formData.weight) : null,
-          dimensions: formData.dimensions.length ? formData.dimensions : null,
-          is_active: true
-        });
+        .insert(productData);
 
       if (error) throw error;
 
