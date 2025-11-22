@@ -7,9 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Star, MapPin, ExternalLink, Search, Filter } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Slider } from '@/components/ui/slider';
+import { Star, MapPin, ExternalLink, Search, Filter, Grid3x3, Store as StoreIcon, SlidersHorizontal } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import ProductCard from '@/components/ProductCard';
 
 interface Store {
   id: string;
@@ -24,13 +27,33 @@ interface Store {
   product_count?: number;
 }
 
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  image_url: string;
+  inventory_count: number;
+  category: string;
+  stores: {
+    id: string;
+    name: string;
+  };
+}
+
 const Marketplace = () => {
   const [stores, setStores] = useState<Store[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [filteredStores, setFilteredStores] = useState<Store[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedLocation, setSelectedLocation] = useState('all');
+  const [sortBy, setSortBy] = useState('newest');
+  const [priceRange, setPriceRange] = useState([0, 1000]);
+  const [maxPrice, setMaxPrice] = useState(1000);
+  const [viewMode, setViewMode] = useState<'stores' | 'products'>('products');
   const { toast } = useToast();
 
   const categories = [
@@ -57,11 +80,16 @@ const Marketplace = () => {
 
   useEffect(() => {
     fetchStores();
+    fetchProducts();
   }, []);
 
   useEffect(() => {
     filterStores();
   }, [stores, searchTerm, selectedCategory, selectedLocation]);
+
+  useEffect(() => {
+    filterProducts();
+  }, [products, searchTerm, selectedCategory, sortBy, priceRange]);
 
   const fetchStores = async () => {
     try {
@@ -90,6 +118,34 @@ const Marketplace = () => {
         description: error.message,
         variant: "destructive",
       });
+    }
+  };
+
+  const fetchProducts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          stores!products_store_id_fkey(id, name)
+        `)
+        .eq('is_active', true);
+
+      if (error) {
+        throw error;
+      }
+
+      const prices = data?.map(p => p.price) || [0];
+      const max = Math.max(...prices, 1000);
+      setMaxPrice(max);
+      setPriceRange([0, max]);
+      setProducts(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Error loading products",
+        description: error.message,
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -115,6 +171,43 @@ const Marketplace = () => {
     }
 
     setFilteredStores(filtered);
+  };
+
+  const filterProducts = () => {
+    let filtered = products;
+
+    if (searchTerm) {
+      filtered = filtered.filter(product =>
+        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.stores?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (selectedCategory && selectedCategory !== 'all') {
+      filtered = filtered.filter(product => product.category === selectedCategory);
+    }
+
+    filtered = filtered.filter(product => 
+      product.price >= priceRange[0] && product.price <= priceRange[1]
+    );
+
+    // Sort
+    filtered = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'price-low':
+          return a.price - b.price;
+        case 'price-high':
+          return b.price - a.price;
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'newest':
+        default:
+          return 0;
+      }
+    });
+
+    setFilteredProducts(filtered);
   };
 
   if (loading) {
@@ -153,18 +246,39 @@ const Marketplace = () => {
       {/* Filters Section */}
       <section className="py-8 bg-muted/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row gap-4 items-center">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search stores, products, or creators..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 glass border-white/20"
-              />
+          <div className="space-y-4">
+            <div className="flex flex-col md:flex-row gap-4 items-center">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search stores, products, or creators..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 glass border-white/20"
+                />
+              </div>
+              
+              <div className="flex gap-2">
+                <Button
+                  variant={viewMode === 'products' ? 'apple' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('products')}
+                >
+                  <Grid3x3 className="h-4 w-4 mr-2" />
+                  Products
+                </Button>
+                <Button
+                  variant={viewMode === 'stores' ? 'apple' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('stores')}
+                >
+                  <StoreIcon className="h-4 w-4 mr-2" />
+                  Stores
+                </Button>
+              </div>
             </div>
-            
-            <div className="flex gap-4">
+
+            <div className="flex flex-wrap gap-4 items-center">
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger className="w-48 glass border-white/20">
                   <Filter className="h-4 w-4 mr-2" />
@@ -179,116 +293,198 @@ const Marketplace = () => {
                 </SelectContent>
               </Select>
 
-              <Select value={selectedLocation} onValueChange={setSelectedLocation}>
-                <SelectTrigger className="w-48 glass border-white/20">
-                  <MapPin className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Location" />
-                </SelectTrigger>
-                <SelectContent>
-                  {locations.map(location => (
-                    <SelectItem key={location} value={location}>
-                      {location === 'all' ? 'All Locations' : location}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {viewMode === 'stores' && (
+                <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                  <SelectTrigger className="w-48 glass border-white/20">
+                    <MapPin className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="Location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {locations.map(location => (
+                      <SelectItem key={location} value={location}>
+                        {location === 'all' ? 'All Locations' : location}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+
+              {viewMode === 'products' && (
+                <>
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger className="w-48 glass border-white/20">
+                      <SlidersHorizontal className="h-4 w-4 mr-2" />
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="newest">Newest First</SelectItem>
+                      <SelectItem value="price-low">Price: Low to High</SelectItem>
+                      <SelectItem value="price-high">Price: High to Low</SelectItem>
+                      <SelectItem value="name">Name: A to Z</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <div className="glass border-white/20 rounded-md px-4 py-2 min-w-[200px]">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-muted-foreground">Price Range</span>
+                      <span className="text-sm font-medium">${priceRange[0]} - ${priceRange[1]}</span>
+                    </div>
+                    <Slider
+                      min={0}
+                      max={maxPrice}
+                      step={10}
+                      value={priceRange}
+                      onValueChange={setPriceRange}
+                      className="w-full"
+                    />
+                  </div>
+                </>
+              )}
+
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => {
+                  setSearchTerm('');
+                  setSelectedCategory('all');
+                  setSelectedLocation('all');
+                  setSortBy('newest');
+                  setPriceRange([0, maxPrice]);
+                }}
+              >
+                Clear All
+              </Button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Stores Grid */}
+      {/* Content Grid */}
       <section className="py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-foreground mb-2">
-              {filteredStores.length} {filteredStores.length === 1 ? 'Store' : 'Stores'} Found
+              {viewMode === 'products' 
+                ? `${filteredProducts.length} ${filteredProducts.length === 1 ? 'Product' : 'Products'} Found`
+                : `${filteredStores.length} ${filteredStores.length === 1 ? 'Store' : 'Stores'} Found`
+              }
             </h2>
             <p className="text-muted-foreground">
               {searchTerm && `Results for "${searchTerm}"`}
               {selectedCategory !== 'all' && ` in ${selectedCategory}`}
-              {selectedLocation !== 'all' && ` located in ${selectedLocation}`}
+              {viewMode === 'stores' && selectedLocation !== 'all' && ` located in ${selectedLocation}`}
             </p>
           </div>
 
-          {filteredStores.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                <Search className="h-8 w-8 text-muted-foreground" />
+          {viewMode === 'products' ? (
+            filteredProducts.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Search className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-xl font-semibold text-foreground mb-2">No products found</h3>
+                <p className="text-muted-foreground mb-4">
+                  Try adjusting your search criteria or browse all categories
+                </p>
+                <Button 
+                  onClick={() => {
+                    setSearchTerm('');
+                    setSelectedCategory('all');
+                    setSortBy('newest');
+                    setPriceRange([0, maxPrice]);
+                  }}
+                  variant="outline"
+                >
+                  Clear Filters
+                </Button>
               </div>
-              <h3 className="text-xl font-semibold text-foreground mb-2">No stores found</h3>
-              <p className="text-muted-foreground mb-4">
-                Try adjusting your search criteria or browse all categories
-              </p>
-              <Button 
-                onClick={() => {
-                  setSearchTerm('');
-                  setSelectedCategory('all');
-                  setSelectedLocation('all');
-                }}
-                variant="outline"
-              >
-                Clear Filters
-              </Button>
-            </div>
+            ) : (
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {filteredProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            )
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredStores.map((store) => (
-                <Card key={store.id} className="group hover-lift glass-card cursor-pointer overflow-hidden">
-                  <div className="relative">
-                    <img 
-                      src={store.image_url || '/placeholder.svg'} 
-                      alt={`${store.name} store`}
-                      className="w-full h-48 object-cover group-hover:scale-105 transition-smooth"
-                    />
-                    {store.category && (
-                      <Badge className="absolute top-4 left-4 bg-white/90 text-foreground">
-                        {store.category}
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="text-xl font-semibold text-foreground mb-1">
-                          {store.name}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          by {store.profiles?.full_name || 'Unknown'}
-                        </p>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                        <span className="text-sm font-medium">4.8</span>
-                        <span className="text-xs text-muted-foreground">(124)</span>
-                      </div>
+            filteredStores.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Search className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-xl font-semibold text-foreground mb-2">No stores found</h3>
+                <p className="text-muted-foreground mb-4">
+                  Try adjusting your search criteria or browse all categories
+                </p>
+                <Button 
+                  onClick={() => {
+                    setSearchTerm('');
+                    setSelectedCategory('all');
+                    setSelectedLocation('all');
+                  }}
+                  variant="outline"
+                >
+                  Clear Filters
+                </Button>
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {filteredStores.map((store) => (
+                  <Card key={store.id} className="group hover-lift glass-card cursor-pointer overflow-hidden">
+                    <div className="relative">
+                      <img 
+                        src={store.image_url || '/placeholder.svg'} 
+                        alt={`${store.name} store`}
+                        className="w-full h-48 object-cover group-hover:scale-105 transition-smooth"
+                      />
+                      {store.category && (
+                        <Badge className="absolute top-4 left-4 bg-white/90 text-foreground">
+                          {store.category}
+                        </Badge>
+                      )}
                     </div>
-
-                    <p className="text-muted-foreground text-sm mb-4 leading-relaxed line-clamp-2">
-                      {store.description || 'A unique store offering quality products.'}
-                    </p>
-
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <MapPin className="h-4 w-4 mr-1" />
-                        {store.location || 'Location not specified'}
+                    
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h3 className="text-xl font-semibold text-foreground mb-1">
+                            {store.name}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            by {store.profiles?.full_name || 'Unknown'}
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                          <span className="text-sm font-medium">4.8</span>
+                          <span className="text-xs text-muted-foreground">(124)</span>
+                        </div>
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        {store.product_count} products
-                      </div>
-                    </div>
 
-                    <Link to={`/store/${store.id}`}>
-                      <Button variant="apple" className="w-full">
-                        Visit Store
-                        <ExternalLink className="h-4 w-4 ml-2" />
-                      </Button>
-                    </Link>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                      <p className="text-muted-foreground text-sm mb-4 leading-relaxed line-clamp-2">
+                        {store.description || 'A unique store offering quality products.'}
+                      </p>
+
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center text-sm text-muted-foreground">
+                          <MapPin className="h-4 w-4 mr-1" />
+                          {store.location || 'Location not specified'}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {store.product_count} products
+                        </div>
+                      </div>
+
+                      <Link to={`/store/${store.id}`}>
+                        <Button variant="apple" className="w-full">
+                          Visit Store
+                          <ExternalLink className="h-4 w-4 ml-2" />
+                        </Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )
           )}
         </div>
       </section>
