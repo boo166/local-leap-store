@@ -13,6 +13,7 @@ import { Star, MapPin, ExternalLink, Search, Filter, Grid3x3, Store as StoreIcon
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import ProductCard from '@/components/ProductCard';
+import SEOHead from '@/components/SEOHead';
 
 interface Store {
   id: string;
@@ -229,6 +230,11 @@ const Marketplace = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title="Marketplace - Discover Local Stores & Products"
+        description="Browse unique products from talented local creators and businesses. Shop handmade crafts, artisanal goods, and more from verified sellers."
+        keywords={['marketplace', 'local stores', 'handmade products', 'artisan goods', 'shop local', 'small business']}
+      />
       <Navigation />
       
       {/* Hero Section */}

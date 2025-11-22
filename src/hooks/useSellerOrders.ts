@@ -23,6 +23,9 @@ export interface Order {
   shipping_address: string;
   tracking_number: string | null;
   seller_notes: string | null;
+  refund_status: string;
+  cancellation_reason: string | null;
+  cancelled_at: string | null;
   created_at: string;
   order_items: OrderItem[];
   profiles?: {
