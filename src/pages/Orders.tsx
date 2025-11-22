@@ -5,12 +5,14 @@ import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Package, ShoppingBag, ArrowLeft } from 'lucide-react';
+import { Package, ShoppingBag, ArrowLeft, XCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { Button } from '@/components/ui/button';
+import CancellationDialog from '@/components/CancellationDialog';
+import SEOHead from '@/components/SEOHead';
 
 interface Order {
   id: string;
@@ -19,6 +21,8 @@ interface Order {
   shipping_address: string;
   tracking_number: string | null;
   seller_notes: string | null;
+  refund_status: string;
+  cancellation_reason: string | null;
   created_at: string;
   order_items: {
     id: string;
@@ -34,6 +38,8 @@ interface Order {
 const Orders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cancellationDialogOpen, setCancellationDialogOpen] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -92,11 +98,40 @@ const Orders = () => {
     }
   };
 
+  const getRefundStatusBadge = (refundStatus: string) => {
+    switch (refundStatus) {
+      case 'requested':
+        return <Badge variant="secondary" className="bg-yellow-500">Refund Requested</Badge>;
+      case 'approved':
+        return <Badge variant="secondary" className="bg-green-500">Refund Approved</Badge>;
+      case 'rejected':
+        return <Badge variant="destructive">Refund Rejected</Badge>;
+      case 'completed':
+        return <Badge variant="secondary" className="bg-green-600">Refunded</Badge>;
+      default:
+        return null;
+    }
+  };
+
+  const canCancelOrder = (order: Order) => {
+    return order.status === 'pending' && order.refund_status === 'none';
+  };
+
+  const handleCancelClick = (orderId: string) => {
+    setSelectedOrderId(orderId);
+    setCancellationDialogOpen(true);
+  };
+
   if (loading) {
-    return (
-      <ProtectedRoute>
-        <div className="min-h-screen bg-background">
-          <Navigation />
+  return (
+    <ProtectedRoute>
+      <div className="min-h-screen bg-background">
+        <SEOHead
+          title="My Orders - GlassStore"
+          description="View and track all your orders. Check order status, shipping information, and request cancellations."
+          keywords={['orders', 'order history', 'track order', 'order status']}
+        />
+        <Navigation />
           <div className="flex items-center justify-center min-h-[60vh]">
             <div className="glass rounded-xl p-8">
               <div className="animate-pulse text-center space-y-4">
@@ -155,7 +190,7 @@ const Orders = () => {
                   <Card key={order.id} className="glass-card">
                     <CardHeader>
                       <div className="flex justify-between items-start">
-                        <div>
+                        <div className="flex-1">
                           <CardTitle className="text-lg">
                             Order #{order.id.slice(0, 8).toUpperCase()}
                           </CardTitle>
@@ -167,10 +202,24 @@ const Orders = () => {
                             })}
                           </p>
                         </div>
-                        <Badge className={getStatusColor(order.status)}>
-                          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                        </Badge>
+                        <div className="flex flex-col gap-2 items-end">
+                          <Badge className={getStatusColor(order.status)}>
+                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                          </Badge>
+                          {getRefundStatusBadge(order.refund_status)}
+                        </div>
                       </div>
+                      
+                      {/* Cancellation reason if exists */}
+                      {order.cancellation_reason && (
+                        <div className="mt-3 p-3 bg-muted rounded-lg flex items-start gap-2">
+                          <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">Cancellation Reason:</p>
+                            <p className="text-sm text-muted-foreground">{order.cancellation_reason}</p>
+                          </div>
+                        </div>
+                      )}
                     </CardHeader>
                     
                     <CardContent className="space-y-4">
@@ -206,7 +255,7 @@ const Orders = () => {
                       <Separator />
                       
                       {/* Order Summary */}
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         {order.shipping_address && (
                           <div className="text-sm">
                             <span className="text-muted-foreground">Shipping to: </span>
@@ -219,16 +268,34 @@ const Orders = () => {
                             <span className="text-foreground font-mono">{order.tracking_number}</span>
                           </div>
                         )}
-                        {order.seller_notes && (
+                        {order.seller_notes && order.refund_status !== 'none' && (
                           <div className="text-sm">
-                            <span className="text-muted-foreground">Seller Notes: </span>
+                            <span className="text-muted-foreground">
+                              {order.refund_status === 'rejected' ? 'Rejection Reason: ' : 'Seller Notes: '}
+                            </span>
                             <span className="text-foreground">{order.seller_notes}</span>
                           </div>
                         )}
+                        
+                        <Separator />
+                        
                         <div className="flex justify-between items-center font-bold text-lg">
                           <span>Total</span>
                           <span className="text-primary">{formatPrice(order.total_amount)}</span>
                         </div>
+
+                        {/* Cancel order button */}
+                        {canCancelOrder(order) && (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="w-full mt-2"
+                            onClick={() => handleCancelClick(order.id)}
+                          >
+                            <XCircle className="h-4 w-4 mr-2" />
+                            Cancel Order
+                          </Button>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -240,6 +307,16 @@ const Orders = () => {
 
         <Footer />
       </div>
+
+      {/* Cancellation Dialog */}
+      {selectedOrderId && (
+        <CancellationDialog
+          orderId={selectedOrderId}
+          open={cancellationDialogOpen}
+          onOpenChange={setCancellationDialogOpen}
+          onSuccess={fetchOrders}
+        />
+      )}
     </ProtectedRoute>
   );
 };

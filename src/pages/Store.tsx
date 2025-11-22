@@ -20,6 +20,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/hooks/useCart';
+import SEOHead from '@/components/SEOHead';
 
 interface StoreData {
   id: string;
@@ -155,6 +156,24 @@ const Store = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title={`${store.name} - Shop Local Products`}
+        description={store.description || `Discover unique products from ${store.name}. Shop local and support small businesses.`}
+        keywords={[store.name, store.category, 'local store', 'shop local', store.location || 'marketplace']}
+        ogType="product"
+        ogImage={store.image_url}
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": "Store",
+          "name": store.name,
+          "description": store.description,
+          "image": store.image_url,
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": store.location
+          }
+        }}
+      />
       <Navigation />
       
       {/* Store Header */}

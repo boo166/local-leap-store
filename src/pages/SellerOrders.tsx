@@ -22,9 +22,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Package, Truck, CheckCircle, XCircle, Clock, Edit } from 'lucide-react';
+import { Package, Truck, CheckCircle, XCircle, Clock, Edit, DollarSign } from 'lucide-react';
 import { useSellerOrders } from '@/hooks/useSellerOrders';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import RefundManagementDialog from '@/components/RefundManagementDialog';
+import SEOHead from '@/components/SEOHead';
 
 const SellerOrders = () => {
   const { orders, loading, updateOrderStatus, updateTrackingInfo } = useSellerOrders();
@@ -32,6 +34,8 @@ const SellerOrders = () => {
   const [trackingNumber, setTrackingNumber] = useState('');
   const [sellerNotes, setSellerNotes] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [refundDialogOpen, setRefundDialogOpen] = useState(false);
+  const [selectedRefundOrder, setSelectedRefundOrder] = useState<any>(null);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -93,11 +97,37 @@ const SellerOrders = () => {
     setSellerNotes('');
   };
 
+  const handleRefundClick = (order: any) => {
+    setSelectedRefundOrder(order);
+    setRefundDialogOpen(true);
+  };
+
+  const getRefundStatusBadge = (refundStatus: string) => {
+    switch (refundStatus) {
+      case 'requested':
+        return <Badge variant="secondary" className="bg-yellow-500">Refund Requested</Badge>;
+      case 'approved':
+        return <Badge variant="secondary" className="bg-green-500">Approved</Badge>;
+      case 'rejected':
+        return <Badge variant="destructive">Rejected</Badge>;
+      case 'completed':
+        return <Badge variant="secondary" className="bg-green-600">Completed</Badge>;
+      default:
+        return null;
+    }
+  };
+
   if (loading) {
-    return (
-      <ProtectedRoute>
-        <div className="min-h-screen bg-background">
-          <Navigation />
+  return (
+    <ProtectedRoute>
+      <div className="min-h-screen bg-background">
+        <SEOHead
+          title="Manage Orders - Seller Dashboard"
+          description="Manage your store orders, update shipping information, and handle refund requests."
+          keywords={['seller orders', 'order management', 'shipping', 'refunds']}
+          noindex={true}
+        />
+        <Navigation />
           <div className="flex items-center justify-center min-h-[60vh]">
             <div className="glass rounded-xl p-8">
               <div className="animate-pulse text-center space-y-4">
@@ -187,6 +217,32 @@ const SellerOrders = () => {
 
                     <CardContent>
                       <div className="space-y-4">
+                        {/* Refund Status if applicable */}
+                        {order.refund_status && order.refund_status !== 'none' && (
+                          <div className="p-3 bg-muted rounded-lg">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm font-medium">Refund Status:</span>
+                              {getRefundStatusBadge(order.refund_status)}
+                            </div>
+                            {order.cancellation_reason && (
+                              <p className="text-sm text-muted-foreground">
+                                Reason: {order.cancellation_reason}
+                              </p>
+                            )}
+                            {order.refund_status === 'requested' && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="mt-2 w-full"
+                                onClick={() => handleRefundClick(order)}
+                              >
+                                <DollarSign className="h-4 w-4 mr-2" />
+                                Review Refund Request
+                              </Button>
+                            )}
+                          </div>
+                        )}
+
                         {/* Order Items */}
                         <div>
                           <h4 className="font-semibold mb-3">Items</h4>
@@ -313,6 +369,16 @@ const SellerOrders = () => {
 
         <Footer />
       </div>
+
+      {/* Refund Management Dialog */}
+      {selectedRefundOrder && (
+        <RefundManagementDialog
+          order={selectedRefundOrder}
+          open={refundDialogOpen}
+          onOpenChange={setRefundDialogOpen}
+          onSuccess={() => window.location.reload()}
+        />
+      )}
     </ProtectedRoute>
   );
 };
