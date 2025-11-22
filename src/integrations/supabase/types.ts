@@ -400,40 +400,70 @@ export type Database = {
       }
       stores: {
         Row: {
+          business_hours: Json | null
           category: string | null
           created_at: string
           description: string | null
+          email: string | null
+          facebook: string | null
           id: string
           image_url: string | null
+          instagram: string | null
           is_active: boolean | null
           location: string | null
+          logo_url: string | null
           name: string
+          phone: string | null
+          tags: string[] | null
+          twitter: string | null
           updated_at: string
           user_id: string
+          view_count: number | null
+          website: string | null
         }
         Insert: {
+          business_hours?: Json | null
           category?: string | null
           created_at?: string
           description?: string | null
+          email?: string | null
+          facebook?: string | null
           id?: string
           image_url?: string | null
+          instagram?: string | null
           is_active?: boolean | null
           location?: string | null
+          logo_url?: string | null
           name: string
+          phone?: string | null
+          tags?: string[] | null
+          twitter?: string | null
           updated_at?: string
           user_id: string
+          view_count?: number | null
+          website?: string | null
         }
         Update: {
+          business_hours?: Json | null
           category?: string | null
           created_at?: string
           description?: string | null
+          email?: string | null
+          facebook?: string | null
           id?: string
           image_url?: string | null
+          instagram?: string | null
           is_active?: boolean | null
           location?: string | null
+          logo_url?: string | null
           name?: string
+          phone?: string | null
+          tags?: string[] | null
+          twitter?: string | null
           updated_at?: string
           user_id?: string
+          view_count?: number | null
+          website?: string | null
         }
         Relationships: [
           {
@@ -624,6 +654,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_store_views: {
+        Args: { store_id_param: string }
+        Returns: undefined
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_seller_of_order: {
