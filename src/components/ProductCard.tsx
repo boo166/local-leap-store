@@ -3,9 +3,10 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ShoppingCart, Heart, Eye } from 'lucide-react';
+import { ShoppingCart, Eye } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
 import { useAuth } from '@/contexts/AuthContext';
+import WishlistButton from '@/components/WishlistButton';
 
 interface ProductCardProps {
   product: {
@@ -77,17 +78,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             >
               <Eye className="h-4 w-4" />
             </Button>
-            <Button 
-              size="sm" 
-              variant="secondary"
-              className="glass"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-            >
-              <Heart className="h-4 w-4" />
-            </Button>
+            <WishlistButton 
+              productId={product.id}
+              variant="icon"
+            />
           </div>
         </div>
         
