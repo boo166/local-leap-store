@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -9,10 +9,13 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, Store, Trash2 } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
+import { ArrowLeft, Store, Trash2, Upload, Image as ImageIcon, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useStoreImageUpload } from '@/hooks/useStoreImageUpload';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import {
   AlertDialog,
@@ -31,14 +34,26 @@ const EditStore = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { uploadStoreImage, uploading } = useStoreImageUpload();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const [tagInput, setTagInput] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     category: '',
     location: '',
     image_url: '',
+    logo_url: '',
+    phone: '',
+    email: '',
+    website: '',
+    instagram: '',
+    facebook: '',
+    twitter: '',
+    tags: [] as string[],
     is_active: true
   });
 
@@ -77,6 +92,14 @@ const EditStore = () => {
           category: data.category || '',
           location: data.location || '',
           image_url: data.image_url || '',
+          logo_url: data.logo_url || '',
+          phone: data.phone || '',
+          email: data.email || '',
+          website: data.website || '',
+          instagram: data.instagram || '',
+          facebook: data.facebook || '',
+          twitter: data.twitter || '',
+          tags: data.tags || [],
           is_active: data.is_active
         });
       }
@@ -120,6 +143,37 @@ const EditStore = () => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    const url = await uploadStoreImage(file, user.id, 'banner');
+    if (url) {
+      setFormData({ ...formData, image_url: url });
+    }
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    const url = await uploadStoreImage(file, user.id, 'logo');
+    if (url) {
+      setFormData({ ...formData, logo_url: url });
+    }
+  };
+
+  const addTag = () => {
+    if (tagInput.trim() && formData.tags.length < 10) {
+      setFormData({ ...formData, tags: [...formData.tags, tagInput.trim()] });
+      setTagInput('');
+    }
+  };
+
+  const removeTag = (index: number) => {
+    setFormData({ ...formData, tags: formData.tags.filter((_, i) => i !== index) });
   };
 
   const handleDelete = async () => {
