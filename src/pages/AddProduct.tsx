@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -9,11 +9,15 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowLeft, Package, AlertTriangle, Crown } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
+import { ArrowLeft, Package, AlertTriangle, Crown, Upload, X, Plus, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useProductImageUpload } from '@/hooks/useProductImageUpload';
+import { LowStockAlert } from '@/components/LowStockAlert';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 interface Store {
@@ -21,14 +25,25 @@ interface Store {
   name: string;
 }
 
+interface ProductVariant {
+  name: string;
+  value: string;
+  priceAdjustment?: number;
+}
+
 const AddProduct = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
   const subscription = useSubscription();
+  const { uploadProductImage, uploading } = useProductImageUpload();
   const [loading, setLoading] = useState(false);
   const [stores, setStores] = useState<Store[]>([]);
   const [canAdd, setCanAdd] = useState<boolean | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const [tagInput, setTagInput] = useState('');
+  const [variantName, setVariantName] = useState('');
+  const [variantValue, setVariantValue] = useState('');
   const [formData, setFormData] = useState({
     store_id: '',
     name: '',
@@ -36,7 +51,14 @@ const AddProduct = () => {
     price: '',
     category: '',
     inventory_count: '',
-    image_url: ''
+    image_url: '',
+    images: [] as string[],
+    sku: '',
+    tags: [] as string[],
+    variants: [] as ProductVariant[],
+    low_stock_threshold: '5',
+    weight: '',
+    dimensions: { length: '', width: '', height: '' }
   });
 
   useEffect(() => {
@@ -84,6 +106,64 @@ const AddProduct = () => {
     'Other'
   ];
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || !user) return;
+
+    const urls: string[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const url = await uploadProductImage(files[i], user.id);
+      if (url) urls.push(url);
+    }
+
+    if (urls.length > 0) {
+      setFormData({
+        ...formData,
+        images: [...formData.images, ...urls],
+        image_url: formData.image_url || urls[0]
+      });
+      toast({
+        title: 'Images uploaded',
+        description: `${urls.length} image(s) uploaded successfully`,
+      });
+    }
+  };
+
+  const removeImage = (index: number) => {
+    const newImages = formData.images.filter((_, i) => i !== index);
+    setFormData({
+      ...formData,
+      images: newImages,
+      image_url: newImages[0] || ''
+    });
+  };
+
+  const addTag = () => {
+    if (tagInput.trim() && formData.tags.length < 10) {
+      setFormData({ ...formData, tags: [...formData.tags, tagInput.trim()] });
+      setTagInput('');
+    }
+  };
+
+  const removeTag = (index: number) => {
+    setFormData({ ...formData, tags: formData.tags.filter((_, i) => i !== index) });
+  };
+
+  const addVariant = () => {
+    if (variantName.trim() && variantValue.trim()) {
+      setFormData({
+        ...formData,
+        variants: [...formData.variants, { name: variantName, value: variantValue }]
+      });
+      setVariantName('');
+      setVariantValue('');
+    }
+  };
+
+  const removeVariant = (index: number) => {
+    setFormData({ ...formData, variants: formData.variants.filter((_, i) => i !== index) });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -96,7 +176,6 @@ const AddProduct = () => {
       return;
     }
 
-    // Check product limit before adding
     const allowed = await subscription.canAddProduct();
     if (!allowed) {
       toast({
@@ -120,6 +199,13 @@ const AddProduct = () => {
           category: formData.category,
           inventory_count: parseInt(formData.inventory_count),
           image_url: formData.image_url,
+          images: formData.images,
+          sku: formData.sku || null,
+          tags: formData.tags,
+          variants: formData.variants,
+          low_stock_threshold: parseInt(formData.low_stock_threshold),
+          weight: formData.weight ? parseFloat(formData.weight) : null,
+          dimensions: formData.dimensions.length ? formData.dimensions : null,
           is_active: true
         });
 
@@ -175,7 +261,7 @@ const AddProduct = () => {
         <Navigation />
         
         <section className="py-12">
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <Button
               variant="ghost"
               onClick={() => navigate('/dashboard')}
@@ -184,6 +270,8 @@ const AddProduct = () => {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Dashboard
             </Button>
+
+            {formData.store_id && <LowStockAlert storeId={formData.store_id} />}
 
             <Card className="glass-card">
               <CardHeader>
@@ -219,110 +307,329 @@ const AddProduct = () => {
                   </Alert>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="store_id">Select Store *</Label>
-                    <Select
-                      value={formData.store_id}
-                      onValueChange={(value) => setFormData({ ...formData, store_id: value })}
-                      required
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choose a store" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {stores.map((store) => (
-                          <SelectItem key={store.id} value={store.id}>
-                            {store.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Product Name *</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="Enter product name"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea
-                      id="description"
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      placeholder="Describe your product..."
-                      rows={4}
-                    />
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-4">
+                <form onSubmit={handleSubmit} className="space-y-8">
+                  {/* Basic Information */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Basic Information</h3>
+                    <Separator />
+                    
                     <div className="space-y-2">
-                      <Label htmlFor="price">Price (USD) *</Label>
-                      <Input
-                        id="price"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={formData.price}
-                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                        placeholder="0.00"
+                      <Label htmlFor="store_id">Select Store *</Label>
+                      <Select
+                        value={formData.store_id}
+                        onValueChange={(value) => setFormData({ ...formData, store_id: value })}
                         required
-                      />
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Choose a store" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {stores.map((store) => (
+                            <SelectItem key={store.id} value={store.id}>
+                              {store.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name">Product Name *</Label>
+                        <Input
+                          id="name"
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          placeholder="Enter product name"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="sku">SKU (Optional)</Label>
+                        <Input
+                          id="sku"
+                          value={formData.sku}
+                          onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                          placeholder="PROD-001"
+                        />
+                      </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="inventory_count">Inventory Count *</Label>
-                      <Input
-                        id="inventory_count"
-                        type="number"
-                        min="0"
-                        value={formData.inventory_count}
-                        onChange={(e) => setFormData({ ...formData, inventory_count: e.target.value })}
-                        placeholder="0"
-                        required
+                      <Label htmlFor="description">Description</Label>
+                      <Textarea
+                        id="description"
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        placeholder="Describe your product..."
+                        rows={4}
                       />
+                    </div>
+
+                    <div className="grid md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="price">Price (USD) *</Label>
+                        <Input
+                          id="price"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={formData.price}
+                          onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                          placeholder="0.00"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="inventory_count">Stock *</Label>
+                        <Input
+                          id="inventory_count"
+                          type="number"
+                          min="0"
+                          value={formData.inventory_count}
+                          onChange={(e) => setFormData({ ...formData, inventory_count: e.target.value })}
+                          placeholder="0"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="low_stock_threshold">Low Stock Alert</Label>
+                        <Input
+                          id="low_stock_threshold"
+                          type="number"
+                          min="0"
+                          value={formData.low_stock_threshold}
+                          onChange={(e) => setFormData({ ...formData, low_stock_threshold: e.target.value })}
+                          placeholder="5"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="category">Category *</Label>
+                      <Select
+                        value={formData.category}
+                        onValueChange={(value) => setFormData({ ...formData, category: value })}
+                        required
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((category) => (
+                            <SelectItem key={category} value={category}>
+                              {category}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="category">Category *</Label>
-                    <Select
-                      value={formData.category}
-                      onValueChange={(value) => setFormData({ ...formData, category: value })}
-                      required
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  {/* Product Images */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Product Images</h3>
+                    <Separator />
+                    
+                    <div className="space-y-2">
+                      <Label>Upload Images (Max 5)</Label>
+                      <input
+                        ref={imageInputRef}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleImageUpload}
+                        className="hidden"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => imageInputRef.current?.click()}
+                        disabled={uploading || formData.images.length >= 5}
+                        className="w-full"
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        {uploading ? 'Uploading...' : 'Upload Images'}
+                      </Button>
+                      
+                      {formData.images.length > 0 && (
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+                          {formData.images.map((url, index) => (
+                            <div key={index} className="relative group">
+                              <img 
+                                src={url} 
+                                alt={`Product ${index + 1}`}
+                                className="w-full h-32 object-cover rounded border"
+                              />
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={() => removeImage(index)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                              {index === 0 && (
+                                <Badge className="absolute bottom-2 left-2">Primary</Badge>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="image_url">Product Image URL</Label>
-                    <Input
-                      id="image_url"
-                      type="url"
-                      value={formData.image_url}
-                      onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                      placeholder="https://example.com/image.jpg"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Add an image URL for your product
-                    </p>
+                  {/* Product Variants */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Product Variants</h3>
+                    <Separator />
+                    
+                    <div className="grid md:grid-cols-3 gap-4">
+                      <Input
+                        placeholder="Variant name (e.g., Size)"
+                        value={variantName}
+                        onChange={(e) => setVariantName(e.target.value)}
+                      />
+                      <Input
+                        placeholder="Value (e.g., Large)"
+                        value={variantValue}
+                        onChange={(e) => setVariantValue(e.target.value)}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={addVariant}
+                        disabled={!variantName.trim() || !variantValue.trim()}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Variant
+                      </Button>
+                    </div>
+                    
+                    {formData.variants.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {formData.variants.map((variant, index) => (
+                          <Badge key={index} variant="secondary" className="gap-2">
+                            {variant.name}: {variant.value}
+                            <button
+                              type="button"
+                              onClick={() => removeVariant(index)}
+                              className="hover:text-destructive"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Tags */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Search Tags</h3>
+                    <Separator />
+                    
+                    <div className="flex gap-2">
+                      <Input
+                        value={tagInput}
+                        onChange={(e) => setTagInput(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                        placeholder="Add tags for better discovery"
+                        disabled={formData.tags.length >= 10}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={addTag}
+                        disabled={!tagInput.trim() || formData.tags.length >= 10}
+                      >
+                        Add
+                      </Button>
+                    </div>
+                    
+                    {formData.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {formData.tags.map((tag, index) => (
+                          <Badge key={index} variant="secondary" className="gap-1">
+                            {tag}
+                            <button
+                              type="button"
+                              onClick={() => removeTag(index)}
+                              className="ml-1 hover:text-destructive"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Shipping Information */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Shipping Information (Optional)</h3>
+                    <Separator />
+                    
+                    <div className="grid md:grid-cols-4 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="weight">Weight (kg)</Label>
+                        <Input
+                          id="weight"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={formData.weight}
+                          onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="length">Length (cm)</Label>
+                        <Input
+                          id="length"
+                          type="number"
+                          min="0"
+                          value={formData.dimensions.length}
+                          onChange={(e) => setFormData({ 
+                            ...formData, 
+                            dimensions: { ...formData.dimensions, length: e.target.value }
+                          })}
+                          placeholder="0"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="width">Width (cm)</Label>
+                        <Input
+                          id="width"
+                          type="number"
+                          min="0"
+                          value={formData.dimensions.width}
+                          onChange={(e) => setFormData({ 
+                            ...formData, 
+                            dimensions: { ...formData.dimensions, width: e.target.value }
+                          })}
+                          placeholder="0"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="height">Height (cm)</Label>
+                        <Input
+                          id="height"
+                          type="number"
+                          min="0"
+                          value={formData.dimensions.height}
+                          onChange={(e) => setFormData({ 
+                            ...formData, 
+                            dimensions: { ...formData.dimensions, height: e.target.value }
+                          })}
+                          placeholder="0"
+                        />
+                      </div>
+                    </div>
                   </div>
 
                   <div className="flex gap-4 pt-4">
@@ -337,10 +644,10 @@ const AddProduct = () => {
                     <Button
                       type="submit"
                       variant="apple"
-                      disabled={loading || canAdd === false}
+                      disabled={loading || uploading || canAdd === false}
                       className="flex-1"
                     >
-                      {loading ? 'Adding...' : canAdd === false ? 'Limit Reached' : 'Add Product'}
+                      {loading || uploading ? 'Adding...' : canAdd === false ? 'Limit Reached' : 'Add Product'}
                     </Button>
                   </div>
                 </form>

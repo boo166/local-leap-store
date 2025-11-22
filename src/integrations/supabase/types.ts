@@ -261,40 +261,64 @@ export type Database = {
           category: string | null
           created_at: string
           description: string | null
+          dimensions: Json | null
           id: string
           image_url: string | null
+          images: Json | null
           inventory_count: number | null
           is_active: boolean | null
+          low_stock_threshold: number | null
           name: string
           price: number
+          sales_count: number | null
+          sku: string | null
           store_id: string
+          tags: string[] | null
           updated_at: string
+          variants: Json | null
+          weight: number | null
         }
         Insert: {
           category?: string | null
           created_at?: string
           description?: string | null
+          dimensions?: Json | null
           id?: string
           image_url?: string | null
+          images?: Json | null
           inventory_count?: number | null
           is_active?: boolean | null
+          low_stock_threshold?: number | null
           name: string
           price: number
+          sales_count?: number | null
+          sku?: string | null
           store_id: string
+          tags?: string[] | null
           updated_at?: string
+          variants?: Json | null
+          weight?: number | null
         }
         Update: {
           category?: string | null
           created_at?: string
           description?: string | null
+          dimensions?: Json | null
           id?: string
           image_url?: string | null
+          images?: Json | null
           inventory_count?: number | null
           is_active?: boolean | null
+          low_stock_threshold?: number | null
           name?: string
           price?: number
+          sales_count?: number | null
+          sku?: string | null
           store_id?: string
+          tags?: string[] | null
           updated_at?: string
+          variants?: Json | null
+          weight?: number | null
         }
         Relationships: [
           {
@@ -636,6 +660,15 @@ export type Database = {
         Returns: number
       }
       can_add_product: { Args: { user_id_param: string }; Returns: boolean }
+      get_low_stock_products: {
+        Args: { store_id_param: string }
+        Returns: {
+          id: string
+          inventory_count: number
+          low_stock_threshold: number
+          name: string
+        }[]
+      }
       get_user_subscription_status: {
         Args: { user_id_param: string }
         Returns: {
@@ -654,6 +687,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_product_sales: {
+        Args: { product_id_param: string; quantity_param: number }
+        Returns: undefined
       }
       increment_store_views: {
         Args: { store_id_param: string }
