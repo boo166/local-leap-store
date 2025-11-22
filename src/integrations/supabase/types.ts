@@ -314,6 +314,8 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          mfa_enabled: boolean | null
+          profile_completed_at: string | null
           updated_at: string
           user_id: string
         }
@@ -324,6 +326,8 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          mfa_enabled?: boolean | null
+          profile_completed_at?: string | null
           updated_at?: string
           user_id: string
         }
@@ -334,6 +338,8 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          mfa_enabled?: boolean | null
+          profile_completed_at?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -595,6 +601,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_profile_completion: {
+        Args: { user_id_param: string }
+        Returns: number
+      }
       can_add_product: { Args: { user_id_param: string }; Returns: boolean }
       get_user_subscription_status: {
         Args: { user_id_param: string }
@@ -618,6 +628,10 @@ export type Database = {
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_seller_of_order: {
         Args: { _order_id: string; _user_id: string }
+        Returns: boolean
+      }
+      prepare_account_deletion: {
+        Args: { user_id_param: string }
         Returns: boolean
       }
     }

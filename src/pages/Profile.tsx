@@ -7,9 +7,10 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
+import { Progress } from '@/components/ui/progress';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, User, Mail, Calendar, Shield, Eye, EyeOff, Upload, Trash2, Camera } from 'lucide-react';
+import { ArrowLeft, User, Mail, Calendar, Shield, Eye, EyeOff, Upload, Trash2, Camera, CheckCircle2, Smartphone, QrCode } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAvatarUpload } from '@/hooks/useAvatarUpload';
 import Navigation from '@/components/Navigation';
@@ -29,10 +30,15 @@ const Profile = () => {
   const [profile, setProfile] = useState({
     full_name: '',
     avatar_url: '',
-    bio: ''
+    bio: '',
+    mfa_enabled: false
   });
+  const [profileCompletion, setProfileCompletion] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [show2FASetup, setShow2FASetup] = useState(false);
+  const [qrCode, setQrCode] = useState('');
+  const [verifyCode, setVerifyCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -66,8 +72,17 @@ const Profile = () => {
         setProfile({
           full_name: data.full_name || '',
           avatar_url: data.avatar_url || '',
-          bio: data.bio || ''
+          bio: data.bio || '',
+          mfa_enabled: data.mfa_enabled || false
         });
+      }
+
+      // Calculate profile completion
+      const { data: completionData } = await supabase
+        .rpc('calculate_profile_completion', { user_id_param: user.id });
+      
+      if (completionData !== null) {
+        setProfileCompletion(completionData);
       }
     } catch (error: any) {
       toast({
@@ -191,6 +206,121 @@ const Profile = () => {
     }
   };
 
+  const handleEnable2FA = async () => {
+    if (!user) return;
+
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.auth.mfa.enroll({
+        factorType: 'totp',
+        friendlyName: user.email
+      });
+
+      if (error) throw error;
+
+      if (data) {
+        setQrCode(data.totp.qr_code);
+        setShow2FASetup(true);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error enabling 2FA",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerify2FA = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+
+    setIsLoading(true);
+    try {
+      const factors = await supabase.auth.mfa.listFactors();
+      if (factors.error) throw factors.error;
+
+      const totpFactor = factors.data?.totp?.[0];
+      if (!totpFactor) throw new Error('No TOTP factor found');
+
+      const challenge = await supabase.auth.mfa.challenge({
+        factorId: totpFactor.id
+      });
+      if (challenge.error) throw challenge.error;
+
+      const verify = await supabase.auth.mfa.verify({
+        factorId: totpFactor.id,
+        challengeId: challenge.data.id,
+        code: verifyCode
+      });
+      if (verify.error) throw verify.error;
+
+      // Update profile to mark MFA as enabled
+      await supabase
+        .from('profiles')
+        .update({ mfa_enabled: true })
+        .eq('user_id', user.id);
+
+      setProfile({ ...profile, mfa_enabled: true });
+      setShow2FASetup(false);
+      setVerifyCode('');
+
+      toast({
+        title: "2FA Enabled",
+        description: "Two-factor authentication has been successfully enabled.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Verification failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDisable2FA = async () => {
+    if (!user) return;
+
+    setIsLoading(true);
+    try {
+      const factors = await supabase.auth.mfa.listFactors();
+      if (factors.error) throw factors.error;
+
+      const totpFactor = factors.data?.totp?.[0];
+      if (!totpFactor) throw new Error('No TOTP factor found');
+
+      const { error } = await supabase.auth.mfa.unenroll({
+        factorId: totpFactor.id
+      });
+      if (error) throw error;
+
+      // Update profile
+      await supabase
+        .from('profiles')
+        .update({ mfa_enabled: false })
+        .eq('user_id', user.id);
+
+      setProfile({ ...profile, mfa_enabled: false });
+
+      toast({
+        title: "2FA Disabled",
+        description: "Two-factor authentication has been disabled.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error disabling 2FA",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleDeleteAccount = async () => {
     if (!user) return;
 
@@ -199,19 +329,25 @@ const Profile = () => {
       // Delete user's avatar
       await deleteAvatar(user.id);
 
-      // Note: Full account deletion requires admin privileges
-      // For now, we'll sign out and instruct user to contact support
+      // Call database function to clean up all user data
+      const { error: cleanupError } = await supabase
+        .rpc('prepare_account_deletion', { user_id_param: user.id });
+
+      if (cleanupError) throw cleanupError;
+
+      // Delete the auth user (requires service role, so this will sign out instead)
+      await signOut();
+
       toast({
-        title: "Account Deletion Request",
-        description: "Please contact support to complete account deletion. You have been signed out.",
+        title: "Account Deleted",
+        description: "Your account and all associated data have been removed.",
       });
 
-      await signOut();
       navigate('/');
     } catch (error: any) {
       toast({
-        title: "Error processing request",
-        description: error.message || "Please contact support for assistance.",
+        title: "Error deleting account",
+        description: error.message,
         variant: "destructive",
       });
     } finally {
@@ -296,6 +432,30 @@ const Profile = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Profile Overview */}
           <Card className="glass border-white/20 p-6">
+            {/* Profile Completion Tracker */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-foreground">Profile Completion</span>
+                <span className="text-sm text-muted-foreground">{profileCompletion}%</span>
+              </div>
+              <Progress value={profileCompletion} className="h-2" />
+              {profileCompletion < 100 && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  {!profile.full_name && "Add your name. "}
+                  {!profile.avatar_url && "Upload an avatar. "}
+                  {!profile.bio && "Write a bio."}
+                </p>
+              )}
+              {profileCompletion === 100 && (
+                <div className="flex items-center gap-2 mt-2 text-sm text-green-500">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Profile complete!</span>
+                </div>
+              )}
+            </div>
+            
+            <Separator className="bg-white/20 mb-6" />
+            
             <div className="flex flex-col items-center space-y-4">
               <div className="relative group">
                 {profile.avatar_url ? (
@@ -410,6 +570,99 @@ const Profile = () => {
                 <h2 className="text-lg font-semibold text-foreground">Security</h2>
               </div>
               
+              {/* 2FA Section */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Smartphone className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm font-medium text-foreground">Two-Factor Authentication</span>
+                  </div>
+                  {profile.mfa_enabled && (
+                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Add an extra layer of security to your account
+                </p>
+                
+                {!show2FASetup && !profile.mfa_enabled && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleEnable2FA}
+                    disabled={isLoading}
+                    className="glass border-white/20 hover:bg-white/20"
+                  >
+                    <Smartphone className="w-4 h-4 mr-2" />
+                    Enable 2FA
+                  </Button>
+                )}
+                
+                {profile.mfa_enabled && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDisable2FA}
+                    disabled={isLoading}
+                    className="glass border-white/20 hover:bg-white/20"
+                  >
+                    Disable 2FA
+                  </Button>
+                )}
+                
+                {show2FASetup && qrCode && (
+                  <div className="space-y-4">
+                    <div className="flex flex-col items-center p-4 bg-white rounded-lg">
+                      <img src={qrCode} alt="2FA QR Code" className="w-48 h-48" />
+                      <p className="text-xs text-center text-gray-600 mt-2">
+                        Scan this code with your authenticator app
+                      </p>
+                    </div>
+                    <form onSubmit={handleVerify2FA} className="space-y-3">
+                      <div>
+                        <Label htmlFor="verifyCode" className="text-xs">Verification Code</Label>
+                        <Input
+                          id="verifyCode"
+                          value={verifyCode}
+                          onChange={(e) => setVerifyCode(e.target.value)}
+                          className="glass border-white/20 bg-white/10 text-foreground"
+                          placeholder="Enter 6-digit code"
+                          maxLength={6}
+                          required
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          type="submit"
+                          size="sm"
+                          variant="apple"
+                          disabled={isLoading}
+                          className="flex-1"
+                        >
+                          Verify
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setShow2FASetup(false);
+                            setQrCode('');
+                            setVerifyCode('');
+                          }}
+                          className="glass border-white/20"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+              </div>
+              
+              <Separator className="bg-white/20 mb-6" />
+              
+              {/* Password Section */}
               {!showPasswordForm ? (
                 <div>
                   <p className="text-sm text-muted-foreground mb-4">
@@ -417,6 +670,7 @@ const Profile = () => {
                   </p>
                   <Button
                     variant="outline"
+                    size="sm"
                     onClick={() => setShowPasswordForm(true)}
                     className="glass border-white/20 hover:bg-white/20"
                   >
