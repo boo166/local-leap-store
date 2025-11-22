@@ -12,6 +12,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 import {
   Form,
   FormControl,
@@ -20,11 +24,9 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Tag, CheckCircle2 } from 'lucide-react';
 
 const shippingSchema = z.object({
   fullName: z.string().min(2, 'Name must be at least 2 characters').max(100),
@@ -53,6 +55,11 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   userId,
 }) => {
   const [submitting, setSubmitting] = useState(false);
+  const [promoCode, setPromoCode] = useState('');
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [discount, setDiscount] = useState(0);
+  const [promoMessage, setPromoMessage] = useState('');
+  const [promoApplied, setPromoApplied] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -68,17 +75,60 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
     },
   });
 
+  const applyPromoCode = async () => {
+    if (!promoCode.trim()) return;
+
+    setPromoLoading(true);
+    try {
+      const { data, error } = await supabase
+        .rpc('validate_promo_code', {
+          code_param: promoCode.toUpperCase(),
+          cart_total_param: totalAmount
+        });
+
+      if (error) throw error;
+
+      const result = data[0];
+      if (result.is_valid) {
+        setDiscount(result.discount_amount);
+        setPromoApplied(true);
+        setPromoMessage(result.message);
+        toast({
+          title: "Promo code applied!",
+          description: `You saved $${result.discount_amount.toFixed(2)}`,
+        });
+      } else {
+        setPromoMessage(result.message);
+        toast({
+          title: "Invalid promo code",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error applying promo code",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setPromoLoading(false);
+    }
+  };
+
+  const finalAmount = totalAmount - discount;
+
   const onSubmit = async (data: ShippingFormData) => {
     setSubmitting(true);
     try {
       const shippingAddress = `${data.fullName}\n${data.phone}\n${data.address}\n${data.city}, ${data.postalCode}${data.notes ? `\nNotes: ${data.notes}` : ''}`;
 
-      // Create order
+      // Create order with discounted amount
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
           user_id: userId,
-          total_amount: totalAmount,
+          total_amount: finalAmount,
           status: 'pending',
           shipping_address: shippingAddress,
         })
@@ -139,6 +189,53 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {/* Promo Code Section */}
+            <div className="border rounded-lg p-4 bg-muted/30">
+              <div className="flex gap-2 mb-2">
+                <Input
+                  placeholder="Enter promo code"
+                  value={promoCode}
+                  onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                  disabled={promoApplied}
+                />
+                <Button
+                  type="button"
+                  variant={promoApplied ? "default" : "outline"}
+                  onClick={applyPromoCode}
+                  disabled={promoLoading || promoApplied || !promoCode.trim()}
+                >
+                  {promoLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {promoApplied ? <CheckCircle2 className="h-4 w-4" /> : <Tag className="h-4 w-4" />}
+                </Button>
+              </div>
+              {promoMessage && (
+                <p className={`text-sm ${promoApplied ? 'text-green-600' : 'text-destructive'}`}>
+                  {promoMessage}
+                </p>
+              )}
+            </div>
+
+            {/* Order Summary */}
+            <div className="border rounded-lg p-4 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Subtotal</span>
+                <span>${totalAmount.toFixed(2)}</span>
+              </div>
+              {discount > 0 && (
+                <div className="flex justify-between text-sm text-green-600">
+                  <span>Discount</span>
+                  <span>-${discount.toFixed(2)}</span>
+                </div>
+              )}
+              <Separator />
+              <div className="flex justify-between font-bold">
+                <span>Total</span>
+                <span className="text-primary">${finalAmount.toFixed(2)}</span>
+              </div>
+            </div>
+
+            <Separator />
+
             <FormField
               control={form.control}
               name="fullName"

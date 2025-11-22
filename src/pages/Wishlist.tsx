@@ -31,6 +31,20 @@ const Wishlist = () => {
     });
   };
 
+  const handleAddAllToCart = async () => {
+    let successCount = 0;
+    for (const item of wishlist) {
+      if (item.products.inventory_count > 0) {
+        await addToCart(item.product_id);
+        successCount++;
+      }
+    }
+    toast({
+      title: "Items added to cart",
+      description: `${successCount} item(s) have been added to your cart.`,
+    });
+  };
+
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
@@ -95,10 +109,16 @@ const Wishlist = () => {
                 </p>
               </div>
               {wishlist.length > 0 && (
-                <Button variant="outline" size="sm" onClick={handleShare}>
-                  <Share2 className="h-4 w-4 mr-2" />
-                  Share Wishlist
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="apple" size="sm" onClick={handleAddAllToCart}>
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    Add All to Cart
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={handleShare}>
+                    <Share2 className="h-4 w-4 mr-2" />
+                    Share
+                  </Button>
+                </div>
               )}
             </div>
 
