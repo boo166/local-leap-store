@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -22,8 +24,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Package, Truck, CheckCircle, XCircle, Clock, Edit, DollarSign } from 'lucide-react';
+import { Package, Truck, CheckCircle, XCircle, Clock, Edit, DollarSign, Filter, Download } from 'lucide-react';
 import { useSellerOrders } from '@/hooks/useSellerOrders';
+import OrderTimeline from '@/components/OrderTimeline';
+import OrderFilters from '@/components/OrderFilters';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import RefundManagementDialog from '@/components/RefundManagementDialog';
 import SEOHead from '@/components/SEOHead';
@@ -36,6 +40,9 @@ const SellerOrders = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [refundDialogOpen, setRefundDialogOpen] = useState(false);
   const [selectedRefundOrder, setSelectedRefundOrder] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('all');
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -117,6 +124,71 @@ const SellerOrders = () => {
     }
   };
 
+  const exportOrders = () => {
+    const csv = [
+      ['Order ID', 'Customer', 'Date', 'Status', 'Total', 'Items'].join(','),
+      ...filteredOrders.map(order => [
+        order.id.slice(0, 8),
+        order.profiles?.full_name || order.profiles?.email || 'N/A',
+        new Date(order.created_at).toLocaleDateString(),
+        order.status,
+        order.total_amount.toFixed(2),
+        order.order_items.length
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `seller-orders-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+  };
+
+  const filteredOrders = orders.filter(order => {
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const matchesId = order.id.toLowerCase().includes(query);
+      const matchesCustomer = (order.profiles?.full_name || order.profiles?.email || '').toLowerCase().includes(query);
+      const matchesItems = order.order_items.some(item =>
+        item.products?.name.toLowerCase().includes(query)
+      );
+      if (!matchesId && !matchesCustomer && !matchesItems) return false;
+    }
+
+    // Status filter
+    if (statusFilter !== 'all' && order.status !== statusFilter) {
+      return false;
+    }
+
+    // Date filter
+    if (dateFilter !== 'all') {
+      const orderDate = new Date(order.created_at);
+      const now = new Date();
+      
+      switch (dateFilter) {
+        case 'today':
+          if (orderDate.toDateString() !== now.toDateString()) return false;
+          break;
+        case 'week':
+          const weekAgo = new Date(now.setDate(now.getDate() - 7));
+          if (orderDate < weekAgo) return false;
+          break;
+        case 'month':
+          const monthAgo = new Date(now.setMonth(now.getMonth() - 1));
+          if (orderDate < monthAgo) return false;
+          break;
+        case 'year':
+          const yearAgo = new Date(now.setFullYear(now.getFullYear() - 1));
+          if (orderDate < yearAgo) return false;
+          break;
+      }
+    }
+
+    return true;
+  });
+
   if (loading) {
   return (
     <ProtectedRoute>
@@ -149,16 +221,52 @@ const SellerOrders = () => {
         
         <section className="py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-foreground mb-2">
-                Manage Orders
-              </h1>
-              <p className="text-muted-foreground">
-                View and manage orders for your products
-              </p>
+            <div className="mb-8 flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-foreground mb-2">
+                  Manage Orders
+                </h1>
+                <p className="text-muted-foreground">
+                  View and manage orders for your products ({filteredOrders.length} {filteredOrders.length === 1 ? 'order' : 'orders'})
+                </p>
+              </div>
+              {orders.length > 0 && (
+                <Button variant="outline" size="sm" onClick={exportOrders}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export
+                </Button>
+              )}
             </div>
 
-            {orders.length === 0 ? (
+            {orders.length > 0 && (
+              <OrderFilters
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                statusFilter={statusFilter}
+                onStatusChange={setStatusFilter}
+                dateFilter={dateFilter}
+                onDateChange={setDateFilter}
+              />
+            )}
+
+            {filteredOrders.length === 0 && orders.length > 0 ? (
+              <Card className="glass-card">
+                <CardContent className="text-center py-12">
+                  <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No orders match your filters</h3>
+                  <p className="text-muted-foreground mb-6">
+                    Try adjusting your search or filters
+                  </p>
+                  <Button variant="outline" onClick={() => {
+                    setSearchQuery('');
+                    setStatusFilter('all');
+                    setDateFilter('all');
+                  }}>
+                    Clear Filters
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : orders.length === 0 ? (
               <Card className="glass-card">
                 <CardContent className="text-center py-12">
                   <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -170,7 +278,7 @@ const SellerOrders = () => {
               </Card>
             ) : (
               <div className="space-y-6">
-                {orders.map((order) => (
+                {filteredOrders.map((order) => (
                   <Card key={order.id} className="glass-card">
                     <CardHeader>
                       <div className="flex justify-between items-start">
@@ -217,6 +325,15 @@ const SellerOrders = () => {
 
                     <CardContent>
                       <div className="space-y-4">
+                        {/* Order Timeline */}
+                        <OrderTimeline
+                          currentStatus={order.status}
+                          createdAt={order.created_at}
+                          cancelledAt={order.cancelled_at}
+                        />
+
+                        <Separator />
+
                         {/* Refund Status if applicable */}
                         {order.refund_status && order.refund_status !== 'none' && (
                           <div className="p-3 bg-muted rounded-lg">

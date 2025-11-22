@@ -1,17 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Package, ShoppingBag, ArrowLeft, XCircle, AlertCircle } from 'lucide-react';
+import { Package, ShoppingBag, ArrowLeft, XCircle, AlertCircle, Download } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { Button } from '@/components/ui/button';
 import CancellationDialog from '@/components/CancellationDialog';
+import OrderTimeline from '@/components/OrderTimeline';
+import OrderFilters from '@/components/OrderFilters';
 import SEOHead from '@/components/SEOHead';
 
 interface Order {
@@ -23,6 +25,7 @@ interface Order {
   seller_notes: string | null;
   refund_status: string;
   cancellation_reason: string | null;
+  cancelled_at: string | null;
   created_at: string;
   order_items: {
     id: string;
@@ -40,6 +43,9 @@ const Orders = () => {
   const [loading, setLoading] = useState(true);
   const [cancellationDialogOpen, setCancellationDialogOpen] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('all');
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -122,6 +128,71 @@ const Orders = () => {
     setCancellationDialogOpen(true);
   };
 
+  const exportOrders = () => {
+    const csv = [
+      ['Order ID', 'Date', 'Status', 'Total', 'Items'].join(','),
+      ...filteredOrders.map(order => [
+        order.id.slice(0, 8),
+        new Date(order.created_at).toLocaleDateString(),
+        order.status,
+        order.total_amount.toFixed(2),
+        order.order_items.length
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `orders-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+  };
+
+  const filteredOrders = useMemo(() => {
+    return orders.filter(order => {
+      // Search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesId = order.id.toLowerCase().includes(query);
+        const matchesItems = order.order_items.some(item =>
+          item.products.name.toLowerCase().includes(query)
+        );
+        if (!matchesId && !matchesItems) return false;
+      }
+
+      // Status filter
+      if (statusFilter !== 'all' && order.status !== statusFilter) {
+        return false;
+      }
+
+      // Date filter
+      if (dateFilter !== 'all') {
+        const orderDate = new Date(order.created_at);
+        const now = new Date();
+        
+        switch (dateFilter) {
+          case 'today':
+            if (orderDate.toDateString() !== now.toDateString()) return false;
+            break;
+          case 'week':
+            const weekAgo = new Date(now.setDate(now.getDate() - 7));
+            if (orderDate < weekAgo) return false;
+            break;
+          case 'month':
+            const monthAgo = new Date(now.setMonth(now.getMonth() - 1));
+            if (orderDate < monthAgo) return false;
+            break;
+          case 'year':
+            const yearAgo = new Date(now.setFullYear(now.getFullYear() - 1));
+            if (orderDate < yearAgo) return false;
+            break;
+        }
+      }
+
+      return true;
+    });
+  }, [orders, searchQuery, statusFilter, dateFilter]);
+
   if (loading) {
   return (
     <ProtectedRoute>
@@ -160,16 +231,52 @@ const Orders = () => {
               </Button>
             </Link>
 
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-foreground mb-2">
-                My Orders
-              </h1>
-              <p className="text-muted-foreground">
-                View and track all your orders
-              </p>
+            <div className="mb-8 flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-foreground mb-2">
+                  My Orders
+                </h1>
+                <p className="text-muted-foreground">
+                  View and track all your orders ({filteredOrders.length} {filteredOrders.length === 1 ? 'order' : 'orders'})
+                </p>
+              </div>
+              {orders.length > 0 && (
+                <Button variant="outline" size="sm" onClick={exportOrders}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export
+                </Button>
+              )}
             </div>
 
-            {orders.length === 0 ? (
+            {orders.length > 0 && (
+              <OrderFilters
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                statusFilter={statusFilter}
+                onStatusChange={setStatusFilter}
+                dateFilter={dateFilter}
+                onDateChange={setDateFilter}
+              />
+            )}
+
+            {filteredOrders.length === 0 && orders.length > 0 ? (
+              <Card className="glass-card">
+                <CardContent className="text-center py-12">
+                  <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No orders match your filters</h3>
+                  <p className="text-muted-foreground mb-6">
+                    Try adjusting your search or filters
+                  </p>
+                  <Button variant="outline" onClick={() => {
+                    setSearchQuery('');
+                    setStatusFilter('all');
+                    setDateFilter('all');
+                  }}>
+                    Clear Filters
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : orders.length === 0 ? (
               <Card className="glass-card">
                 <CardContent className="text-center py-12">
                   <ShoppingBag className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -186,7 +293,7 @@ const Orders = () => {
               </Card>
             ) : (
               <div className="space-y-6">
-                {orders.map((order) => (
+                {filteredOrders.map((order) => (
                   <Card key={order.id} className="glass-card">
                     <CardHeader>
                       <div className="flex justify-between items-start">
@@ -223,6 +330,15 @@ const Orders = () => {
                     </CardHeader>
                     
                     <CardContent className="space-y-4">
+                      {/* Order Timeline */}
+                      <OrderTimeline
+                        currentStatus={order.status}
+                        createdAt={order.created_at}
+                        cancelledAt={order.cancelled_at}
+                      />
+
+                      <Separator />
+
                       {/* Order Items */}
                       <div className="space-y-3">
                         {order.order_items.map((item) => (
