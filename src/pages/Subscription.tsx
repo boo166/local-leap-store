@@ -11,13 +11,20 @@ import {
   Check, 
   Clock,
   Sparkles,
-  Zap
+  Zap,
+  Activity,
+  CreditCard
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import PaymentSubmissionModal from '@/components/PaymentSubmissionModal';
+import PaymentStatusCard from '@/components/PaymentStatusCard';
+import UsageTracker from '@/components/UsageTracker';
+import BillingHistory from '@/components/BillingHistory';
+import PlanComparison from '@/components/PlanComparison';
+import SEOHead from '@/components/SEOHead';
 
 interface SubscriptionPlan {
   id: string;
@@ -134,6 +141,12 @@ const Subscription = () => {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-background">
+        <SEOHead
+          title="Subscription Plans - Choose Your Plan"
+          description="Choose the perfect subscription plan for your business. Get more products, analytics, and support."
+          keywords={['subscription', 'pricing', 'plans', 'business']}
+          noindex={true}
+        />
         <Navigation />
         
         <section className="py-12">
@@ -146,6 +159,30 @@ const Subscription = () => {
                 Choose the perfect plan for your business needs
               </p>
             </div>
+
+            <Tabs defaultValue="plans" className="space-y-8">
+              <TabsList className="glass w-full justify-start">
+                <TabsTrigger value="plans" className="flex items-center gap-2">
+                  <Crown className="h-4 w-4" />
+                  Plans
+                </TabsTrigger>
+                <TabsTrigger value="usage" className="flex items-center gap-2">
+                  <Activity className="h-4 w-4" />
+                  Usage
+                </TabsTrigger>
+                <TabsTrigger value="billing" className="flex items-center gap-2">
+                  <CreditCard className="h-4 w-4" />
+                  Billing History
+                </TabsTrigger>
+                <TabsTrigger value="comparison" className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4" />
+                  Compare Plans
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="plans" className="space-y-8">
+            {/* Payment Status if any pending/rejected */}
+            <PaymentStatusCard />
 
             {/* Current Subscription Status */}
             {currentSubscription && (
@@ -316,6 +353,20 @@ const Subscription = () => {
                 </ol>
               </CardContent>
             </Card>
+              </TabsContent>
+
+              <TabsContent value="usage">
+                <UsageTracker />
+              </TabsContent>
+
+              <TabsContent value="billing">
+                <BillingHistory />
+              </TabsContent>
+
+              <TabsContent value="comparison">
+                <PlanComparison />
+              </TabsContent>
+            </Tabs>
           </div>
         </section>
 

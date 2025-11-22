@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 interface SubscriptionStatus {
   hasActiveSubscription: boolean;
@@ -15,6 +16,7 @@ interface SubscriptionStatus {
 
 export const useSubscription = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [status, setStatus] = useState<SubscriptionStatus>({
     hasActiveSubscription: false,
     isTrial: false,
@@ -60,6 +62,14 @@ export const useSubscription = () => {
             hasAnalytics: data.has_analytics,
             loading: false,
           });
+
+          // Show renewal reminder if subscription expires soon
+          if (data.days_remaining <= 3 && data.days_remaining > 0 && !data.is_trial) {
+            toast({
+              title: "Subscription expiring soon",
+              description: `Your subscription expires in ${data.days_remaining} day${data.days_remaining > 1 ? 's' : ''}. Renew now to avoid interruption.`,
+            });
+          }
         } else {
           // No subscription found - set defaults
           setStatus({
