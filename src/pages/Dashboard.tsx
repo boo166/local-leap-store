@@ -18,13 +18,18 @@ import {
   Crown,
   AlertTriangle,
   Clock,
-  ShoppingBag
+  ShoppingBag,
+  BarChart3
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useSellerAnalytics } from '@/hooks/useSellerAnalytics';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import AnalyticsMetrics from '@/components/analytics/AnalyticsMetrics';
+import RevenueChart from '@/components/analytics/RevenueChart';
+import TopProductsCard from '@/components/analytics/TopProductsCard';
 
 interface StoreData {
   id: string;
@@ -55,6 +60,7 @@ const Dashboard = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const subscription = useSubscription();
+  const { analytics, loading: analyticsLoading } = useSellerAnalytics();
 
   useEffect(() => {
     if (user) {
@@ -168,12 +174,12 @@ const Dashboard = () => {
                 <Link to="/seller/orders">
                   <Button variant="outline">
                     <ShoppingBag className="h-4 w-4 mr-2" />
-                    Manage Orders
+                    Orders
                   </Button>
                 </Link>
                 <Link to="/subscription">
                   <Button variant="outline">
-                    <Store className="h-4 w-4 mr-2" />
+                    <Crown className="h-4 w-4 mr-2" />
                     Subscription
                   </Button>
                 </Link>
@@ -273,11 +279,53 @@ const Dashboard = () => {
             </div>
 
             {/* Main Content */}
-            <Tabs defaultValue="stores" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-2">
+            <Tabs defaultValue="analytics" className="space-y-4">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="analytics">
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Analytics
+                </TabsTrigger>
                 <TabsTrigger value="stores">My Stores</TabsTrigger>
                 <TabsTrigger value="products">My Products</TabsTrigger>
               </TabsList>
+
+              <TabsContent value="analytics" className="space-y-6">
+                {analyticsLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="glass rounded-xl p-8">
+                      <div className="animate-pulse text-center space-y-4">
+                        <div className="w-12 h-12 bg-primary/20 rounded-full mx-auto animate-bounce"></div>
+                        <p className="text-muted-foreground">Loading analytics...</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : analytics.totalOrders === 0 ? (
+                  <Card className="glass-card">
+                    <CardContent className="text-center py-12">
+                      <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">No Sales Data Yet</h3>
+                      <p className="text-muted-foreground mb-4">
+                        Once you start receiving orders, your analytics will appear here
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <>
+                    <AnalyticsMetrics
+                      totalRevenue={analytics.totalRevenue}
+                      totalOrders={analytics.totalOrders}
+                      completedOrders={analytics.completedOrders}
+                      pendingOrders={analytics.pendingOrders}
+                      averageOrderValue={analytics.averageOrderValue}
+                    />
+                    
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <RevenueChart data={analytics.revenueByMonth} />
+                      <TopProductsCard products={analytics.topProducts} />
+                    </div>
+                  </>
+                )}
+              </TabsContent>
 
               <TabsContent value="stores" className="space-y-4">
                 <div className="flex justify-between items-center">

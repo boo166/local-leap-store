@@ -48,6 +48,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <img 
             src={product.image_url || '/placeholder.svg'} 
             alt={product.name}
+            loading="lazy"
             className="w-full h-56 object-cover group-hover:scale-105 transition-smooth"
           />
           {product.category && (
