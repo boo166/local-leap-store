@@ -43,9 +43,14 @@ const Navigation = () => {
               Products
             </Link>
             {user && (
-              <Link to="/orders" className="text-foreground hover:text-primary transition-smooth">
-                Orders
-              </Link>
+              <>
+                <Link to="/orders" className="text-foreground hover:text-primary transition-smooth">
+                  Orders
+                </Link>
+                <Link to="/wishlist" className="text-foreground hover:text-primary transition-smooth">
+                  Wishlist
+                </Link>
+              </>
             )}
             {isAdmin && (
               <Link to="/admin" className="text-foreground hover:text-primary transition-smooth">
@@ -112,6 +117,9 @@ const Navigation = () => {
                 <>
                   <Link to="/orders" className="text-foreground hover:text-primary transition-smooth">
                     Orders
+                  </Link>
+                  <Link to="/wishlist" className="text-foreground hover:text-primary transition-smooth">
+                    Wishlist
                   </Link>
                   {isAdmin && (
                     <Link to="/admin" className="text-foreground hover:text-primary transition-smooth">

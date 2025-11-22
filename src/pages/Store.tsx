@@ -21,6 +21,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/hooks/useCart';
 import SEOHead from '@/components/SEOHead';
+import WishlistButton from '@/components/WishlistButton';
+import ProductReviews from '@/components/ProductReviews';
 
 interface StoreData {
   id: string;
@@ -308,6 +310,9 @@ const Store = () => {
                         Only {product.inventory_count} left
                       </Badge>
                     )}
+                    <div className="absolute top-2 right-2">
+                      <WishlistButton productId={product.id} variant="icon" />
+                    </div>
                   </div>
                   
                   <CardContent className="p-4">
@@ -345,6 +350,18 @@ const Store = () => {
           )}
         </div>
       </section>
+
+      {/* Reviews Section - Show reviews for first product as example */}
+      {products.length > 0 && (
+        <section className="py-12 bg-muted/30">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <ProductReviews
+              productId={products[0].id}
+              productName={products[0].name}
+            />
+          </div>
+        </section>
+      )}
 
       <Footer />
     </div>
