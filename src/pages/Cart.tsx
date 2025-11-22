@@ -18,6 +18,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import CheckoutDialog from '@/components/CheckoutDialog';
 
 interface CartItem {
   id: string;
@@ -39,6 +40,7 @@ interface CartItem {
 const Cart = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -165,60 +167,9 @@ const Cart = () => {
     return cartItems.reduce((total, item) => total + item.quantity, 0);
   };
 
-  const handleCheckout = async () => {
+  const handleCheckout = () => {
     if (cartItems.length === 0) return;
-
-    try {
-      // Create order
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          user_id: user?.id,
-          total_amount: getTotalPrice() * 1.08, // Including tax
-          status: 'pending',
-          shipping_address: 'Default Address' // In production, collect from user
-        })
-        .select()
-        .single();
-
-      if (orderError) throw orderError;
-
-      // Create order items
-      const orderItems = cartItems.map(item => ({
-        order_id: order.id,
-        product_id: item.products.id,
-        quantity: item.quantity,
-        price_at_time: item.products.price
-      }));
-
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems);
-
-      if (itemsError) throw itemsError;
-
-      // Clear cart
-      const { error: clearError } = await supabase
-        .from('cart_items')
-        .delete()
-        .eq('user_id', user?.id);
-
-      if (clearError) throw clearError;
-
-      toast({
-        title: "Order placed successfully!",
-        description: "Thank you for your purchase. You can track your order in the Orders page.",
-      });
-
-      // Navigate to orders page
-      window.location.href = '/orders';
-    } catch (error: any) {
-      toast({
-        title: "Checkout failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
+    setCheckoutOpen(true);
   };
 
   if (loading) {
@@ -415,6 +366,14 @@ const Cart = () => {
         </section>
 
         <Footer />
+
+        <CheckoutDialog
+          open={checkoutOpen}
+          onClose={() => setCheckoutOpen(false)}
+          cartItems={cartItems}
+          totalAmount={getTotalPrice() * 1.08}
+          userId={user?.id || ''}
+        />
       </div>
     </ProtectedRoute>
   );
