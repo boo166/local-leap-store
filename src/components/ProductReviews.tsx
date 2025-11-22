@@ -4,11 +4,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import StarRating from '@/components/StarRating';
 import ReviewForm from '@/components/ReviewForm';
 import ReviewList from '@/components/ReviewList';
 import { useProductReviews } from '@/hooks/useProductReviews';
-import { MessageSquare, TrendingUp } from 'lucide-react';
+import { MessageSquare, TrendingUp, Filter, Image as ImageIcon, ShieldCheck } from 'lucide-react';
 
 interface ProductReviewsProps {
   productId: string;
@@ -27,6 +28,19 @@ const ProductReviews = ({ productId, productName }: ProductReviewsProps) => {
   } = useProductReviews(productId);
 
   const [showReviewForm, setShowReviewForm] = useState(false);
+  const [ratingFilter, setRatingFilter] = useState<string>('all');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+
+  // Filter reviews based on selected filters
+  const filteredReviews = reviews.filter(review => {
+    const matchesRating = ratingFilter === 'all' || review.rating === parseInt(ratingFilter);
+    const matchesType = 
+      typeFilter === 'all' || 
+      (typeFilter === 'verified' && review.verified_purchase) ||
+      (typeFilter === 'images' && review.review_images && (review.review_images as string[]).length > 0);
+    
+    return matchesRating && matchesType;
+  });
 
   if (loading) {
     return (
@@ -112,8 +126,8 @@ const ProductReviews = ({ productId, productName }: ProductReviewsProps) => {
             </CardHeader>
             <CardContent>
               <ReviewForm
-                onSubmit={async (rating, reviewText) => {
-                  await submitReview(rating, reviewText);
+                onSubmit={async (rating, reviewText, imageUrls) => {
+                  await submitReview(rating, reviewText, imageUrls);
                   setShowReviewForm(false);
                 }}
                 isVerifiedPurchase={canReview}
@@ -121,6 +135,66 @@ const ProductReviews = ({ productId, productName }: ProductReviewsProps) => {
             </CardContent>
           </Card>
         )}
+
+        {/* Review Filters */}
+        <Card className="glass-card">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Filter className="h-4 w-4" />
+              Filter Reviews
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-4">
+            <div className="flex-1 min-w-[200px]">
+              <label className="text-sm font-medium mb-2 block">Rating</label>
+              <Select value={ratingFilter} onValueChange={setRatingFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All ratings" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Ratings</SelectItem>
+                  <SelectItem value="5">5 Stars</SelectItem>
+                  <SelectItem value="4">4 Stars</SelectItem>
+                  <SelectItem value="3">3 Stars</SelectItem>
+                  <SelectItem value="2">2 Stars</SelectItem>
+                  <SelectItem value="1">1 Star</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex-1 min-w-[200px]">
+              <label className="text-sm font-medium mb-2 block">Type</label>
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All reviews" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Reviews</SelectItem>
+                  <SelectItem value="verified">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="h-3 w-3" />
+                      Verified Only
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="images">
+                    <div className="flex items-center gap-2">
+                      <ImageIcon className="h-3 w-3" />
+                      With Images
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {(ratingFilter !== 'all' || typeFilter !== 'all') && (
+              <div className="w-full">
+                <Badge variant="secondary" className="mt-2">
+                  Showing {filteredReviews.length} of {reviews.length} reviews
+                </Badge>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Reviews List */}
         <Tabs defaultValue="recent" className="w-full">
@@ -130,12 +204,12 @@ const ProductReviews = ({ productId, productName }: ProductReviewsProps) => {
           </TabsList>
 
           <TabsContent value="recent" className="mt-6">
-            <ReviewList reviews={reviews} onMarkHelpful={markHelpful} />
+            <ReviewList reviews={filteredReviews} onMarkHelpful={markHelpful} />
           </TabsContent>
 
           <TabsContent value="helpful" className="mt-6">
             <ReviewList
-              reviews={[...reviews].sort((a, b) => b.helpful_count - a.helpful_count)}
+              reviews={[...filteredReviews].sort((a, b) => b.helpful_count - a.helpful_count)}
               onMarkHelpful={markHelpful}
             />
           </TabsContent>
