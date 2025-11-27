@@ -630,8 +630,179 @@ export type Database = {
         }
         Relationships: []
       }
+      store_analytics: {
+        Row: {
+          add_to_cart: number | null
+          conversion_rate: number | null
+          created_at: string | null
+          date: string
+          id: string
+          orders: number | null
+          product_clicks: number | null
+          revenue: number | null
+          store_id: string
+          unique_visitors: number | null
+          views: number | null
+          visitor_data: Json | null
+        }
+        Insert: {
+          add_to_cart?: number | null
+          conversion_rate?: number | null
+          created_at?: string | null
+          date: string
+          id?: string
+          orders?: number | null
+          product_clicks?: number | null
+          revenue?: number | null
+          store_id: string
+          unique_visitors?: number | null
+          views?: number | null
+          visitor_data?: Json | null
+        }
+        Update: {
+          add_to_cart?: number | null
+          conversion_rate?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          orders?: number | null
+          product_clicks?: number | null
+          revenue?: number | null
+          store_id?: string
+          unique_visitors?: number | null
+          views?: number | null
+          visitor_data?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_analytics_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_reviews: {
+        Row: {
+          created_at: string | null
+          helpful_count: number | null
+          id: string
+          is_approved: boolean | null
+          rating: number
+          review_images: Json | null
+          review_text: string | null
+          store_id: string
+          updated_at: string | null
+          user_id: string
+          verified_purchase: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          helpful_count?: number | null
+          id?: string
+          is_approved?: boolean | null
+          rating: number
+          review_images?: Json | null
+          review_text?: string | null
+          store_id: string
+          updated_at?: string | null
+          user_id: string
+          verified_purchase?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          helpful_count?: number | null
+          id?: string
+          is_approved?: boolean | null
+          rating?: number
+          review_images?: Json | null
+          review_text?: string | null
+          store_id?: string
+          updated_at?: string | null
+          user_id?: string
+          verified_purchase?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_reviews_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_reviews_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      store_verifications: {
+        Row: {
+          admin_notes: string | null
+          business_documents: Json | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          store_id: string
+          submitted_at: string | null
+          updated_at: string | null
+          verification_type: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          business_documents?: Json | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          store_id: string
+          submitted_at?: string | null
+          updated_at?: string | null
+          verification_type?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          business_documents?: Json | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          store_id?: string
+          submitted_at?: string | null
+          updated_at?: string | null
+          verification_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_verifications_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "store_verifications_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: true
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stores: {
         Row: {
+          average_rating: number | null
           business_hours: Json | null
           category: string | null
           created_at: string
@@ -642,18 +813,23 @@ export type Database = {
           image_url: string | null
           instagram: string | null
           is_active: boolean | null
+          is_verified: boolean | null
           location: string | null
           logo_url: string | null
           name: string
           phone: string | null
           tags: string[] | null
+          theme_colors: Json | null
+          total_reviews: number | null
           twitter: string | null
           updated_at: string
           user_id: string
+          verification_badge: string | null
           view_count: number | null
           website: string | null
         }
         Insert: {
+          average_rating?: number | null
           business_hours?: Json | null
           category?: string | null
           created_at?: string
@@ -664,18 +840,23 @@ export type Database = {
           image_url?: string | null
           instagram?: string | null
           is_active?: boolean | null
+          is_verified?: boolean | null
           location?: string | null
           logo_url?: string | null
           name: string
           phone?: string | null
           tags?: string[] | null
+          theme_colors?: Json | null
+          total_reviews?: number | null
           twitter?: string | null
           updated_at?: string
           user_id: string
+          verification_badge?: string | null
           view_count?: number | null
           website?: string | null
         }
         Update: {
+          average_rating?: number | null
           business_hours?: Json | null
           category?: string | null
           created_at?: string
@@ -686,14 +867,18 @@ export type Database = {
           image_url?: string | null
           instagram?: string | null
           is_active?: boolean | null
+          is_verified?: boolean | null
           location?: string | null
           logo_url?: string | null
           name?: string
           phone?: string | null
           tags?: string[] | null
+          theme_colors?: Json | null
+          total_reviews?: number | null
           twitter?: string | null
           updated_at?: string
           user_id?: string
+          verification_badge?: string | null
           view_count?: number | null
           website?: string | null
         }
@@ -1032,6 +1217,17 @@ export type Database = {
           name: string
         }[]
       }
+      get_store_analytics_summary: {
+        Args: { p_days?: number; p_store_id: string }
+        Returns: {
+          avg_conversion_rate: number
+          daily_data: Json
+          total_orders: number
+          total_revenue: number
+          total_unique_visitors: number
+          total_views: number
+        }[]
+      }
       get_user_subscription_status: {
         Args: { user_id_param: string }
         Returns: {
@@ -1090,6 +1286,10 @@ export type Database = {
       prepare_account_deletion: {
         Args: { user_id_param: string }
         Returns: boolean
+      }
+      track_store_view: {
+        Args: { p_store_id: string; p_visitor_data?: Json }
+        Returns: undefined
       }
       validate_promo_code: {
         Args: { cart_total_param: number; code_param: string }
