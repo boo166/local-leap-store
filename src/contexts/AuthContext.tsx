@@ -35,6 +35,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // Defer activity logging to prevent deadlock
+        if (session?.user && event === 'SIGNED_IN') {
+          setTimeout(async () => {
+            await supabase.rpc('log_user_activity', {
+              p_user_id: session.user.id,
+              p_activity_type: 'Login',
+              p_activity_category: 'auth',
+              p_description: 'User signed in',
+              p_metadata: { method: 'email', event },
+              p_ip_address: null,
+              p_user_agent: navigator.userAgent
+            });
+          }, 0);
+        }
+        
+        if (event === 'SIGNED_OUT') {
+          setTimeout(() => {
+            console.log('User signed out');
+          }, 0);
+        }
       }
     );
 
@@ -75,6 +96,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (roleError) {
         console.error('Error updating user role:', roleError);
       }
+      
+      // Log signup activity
+      const { error: logError } = await supabase.rpc('log_user_activity', {
+        p_user_id: data.user.id,
+        p_activity_type: 'Account Created',
+        p_activity_category: 'auth',
+        p_description: 'New user account created',
+        p_metadata: { email, role },
+        p_ip_address: null,
+        p_user_agent: navigator.userAgent
+      });
+      
+      if (logError) {
+        console.error('Error logging activity:', logError);
+      }
     }
 
     return { error };
@@ -114,6 +150,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
+    // Log signout before actually signing out
+    if (user) {
+      const { error: logError } = await supabase.rpc('log_user_activity', {
+        p_user_id: user.id,
+        p_activity_type: 'Logout',
+        p_activity_category: 'auth',
+        p_description: 'User signed out',
+        p_metadata: {},
+        p_ip_address: null,
+        p_user_agent: navigator.userAgent
+      });
+      
+      if (logError) {
+        console.error('Error logging activity:', logError);
+      }
+    }
+    
     await supabase.auth.signOut();
   };
 

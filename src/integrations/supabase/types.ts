@@ -796,6 +796,50 @@ export type Database = {
           },
         ]
       }
+      user_activity_logs: {
+        Row: {
+          activity_category: string
+          activity_type: string
+          created_at: string | null
+          description: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          activity_category: string
+          activity_type: string
+          created_at?: string | null
+          description: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          activity_category?: string
+          activity_type?: string
+          created_at?: string | null
+          description?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_activity_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -821,6 +865,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "user_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      user_sessions: {
+        Row: {
+          created_at: string | null
+          device_info: Json | null
+          expires_at: string | null
+          id: string
+          ip_address: string | null
+          is_active: boolean | null
+          last_activity_at: string | null
+          session_token: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          device_info?: Json | null
+          expires_at?: string | null
+          id?: string
+          ip_address?: string | null
+          is_active?: boolean | null
+          last_activity_at?: string | null
+          session_token: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          device_info?: Json | null
+          expires_at?: string | null
+          id?: string
+          ip_address?: string | null
+          is_active?: boolean | null
+          last_activity_at?: string | null
+          session_token?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_sessions_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -931,6 +1022,7 @@ export type Database = {
         Returns: number
       }
       can_add_product: { Args: { user_id_param: string }; Returns: boolean }
+      cleanup_expired_sessions: { Args: never; Returns: undefined }
       get_low_stock_products: {
         Args: { store_id_param: string }
         Returns: {
@@ -982,6 +1074,18 @@ export type Database = {
       is_seller_of_order: {
         Args: { _order_id: string; _user_id: string }
         Returns: boolean
+      }
+      log_user_activity: {
+        Args: {
+          p_activity_category: string
+          p_activity_type: string
+          p_description: string
+          p_ip_address?: string
+          p_metadata?: Json
+          p_user_agent?: string
+          p_user_id: string
+        }
+        Returns: string
       }
       prepare_account_deletion: {
         Args: { user_id_param: string }
