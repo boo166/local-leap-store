@@ -565,9 +565,19 @@ const Profile = () => {
 
             {/* Security Settings */}
             <Card className="glass border-white/20 p-6">
-              <div className="flex items-center space-x-2 mb-4">
-                <Shield className="w-5 h-5 text-primary" />
-                <h2 className="text-lg font-semibold text-foreground">Security</h2>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-2">
+                  <Shield className="w-5 h-5 text-primary" />
+                  <h2 className="text-lg font-semibold text-foreground">Security</h2>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/security')}
+                  className="glass border-white/20 hover:bg-white/20"
+                >
+                  Advanced Settings
+                </Button>
               </div>
               
               {/* 2FA Section */}
