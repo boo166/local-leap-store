@@ -30,6 +30,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import AnalyticsMetrics from '@/components/analytics/AnalyticsMetrics';
 import RevenueChart from '@/components/analytics/RevenueChart';
 import TopProductsCard from '@/components/analytics/TopProductsCard';
+import StoreAnalyticsDashboard from '@/components/StoreAnalyticsDashboard';
 
 interface StoreData {
   id: string;
@@ -290,39 +291,67 @@ const Dashboard = () => {
               </TabsList>
 
               <TabsContent value="analytics" className="space-y-6">
-                {analyticsLoading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <div className="glass rounded-xl p-8">
-                      <div className="animate-pulse text-center space-y-4">
-                        <div className="w-12 h-12 bg-primary/20 rounded-full mx-auto animate-bounce"></div>
-                        <p className="text-muted-foreground">Loading analytics...</p>
-                      </div>
-                    </div>
-                  </div>
-                ) : analytics.totalOrders === 0 ? (
+                {stores.length === 0 ? (
                   <Card className="glass-card">
                     <CardContent className="text-center py-12">
                       <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">No Sales Data Yet</h3>
+                      <h3 className="text-lg font-semibold mb-2">Create a Store First</h3>
                       <p className="text-muted-foreground mb-4">
-                        Once you start receiving orders, your analytics will appear here
+                        Create a store to see analytics data
                       </p>
+                      <Link to="/create-store">
+                        <Button variant="apple">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Create Store
+                        </Button>
+                      </Link>
                     </CardContent>
                   </Card>
                 ) : (
                   <>
-                    <AnalyticsMetrics
-                      totalRevenue={analytics.totalRevenue}
-                      totalOrders={analytics.totalOrders}
-                      completedOrders={analytics.completedOrders}
-                      pendingOrders={analytics.pendingOrders}
-                      averageOrderValue={analytics.averageOrderValue}
-                    />
-                    
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <RevenueChart data={analytics.revenueByMonth} />
-                      <TopProductsCard products={analytics.topProducts} />
+                    {/* Store Analytics Dashboard */}
+                    <div className="space-y-6">
+                      <h3 className="text-lg font-semibold">Store Analytics</h3>
+                      <StoreAnalyticsDashboard storeId={stores[0].id} />
                     </div>
+
+                    {/* Seller Analytics */}
+                    {analyticsLoading ? (
+                      <div className="flex items-center justify-center py-12">
+                        <div className="glass rounded-xl p-8">
+                          <div className="animate-pulse text-center space-y-4">
+                            <div className="w-12 h-12 bg-primary/20 rounded-full mx-auto animate-bounce"></div>
+                            <p className="text-muted-foreground">Loading sales analytics...</p>
+                          </div>
+                        </div>
+                      </div>
+                    ) : analytics.totalOrders === 0 ? (
+                      <Card className="glass-card">
+                        <CardContent className="text-center py-12">
+                          <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                          <h3 className="text-lg font-semibold mb-2">No Sales Data Yet</h3>
+                          <p className="text-muted-foreground mb-4">
+                            Once you start receiving orders, your sales analytics will appear here
+                          </p>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      <>
+                        <h3 className="text-lg font-semibold mt-8">Sales Performance</h3>
+                        <AnalyticsMetrics
+                          totalRevenue={analytics.totalRevenue}
+                          totalOrders={analytics.totalOrders}
+                          completedOrders={analytics.completedOrders}
+                          pendingOrders={analytics.pendingOrders}
+                          averageOrderValue={analytics.averageOrderValue}
+                        />
+                        
+                        <div className="grid md:grid-cols-2 gap-6">
+                          <RevenueChart data={analytics.revenueByMonth} />
+                          <TopProductsCard products={analytics.topProducts} />
+                        </div>
+                      </>
+                    )}
                   </>
                 )}
               </TabsContent>
