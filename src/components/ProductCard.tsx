@@ -3,10 +3,11 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ShoppingCart, Eye } from 'lucide-react';
+import { ShoppingCart, Eye, GitCompare, Check } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
 import { useAuth } from '@/contexts/AuthContext';
 import WishlistButton from '@/components/WishlistButton';
+import { useProductComparison, CompareProduct } from '@/hooks/useProductComparison';
 
 interface ProductCardProps {
   product: {
@@ -27,11 +28,24 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addToCart, loading } = useCart();
   const { user } = useAuth();
+  const { addToCompare, removeFromCompare, isInCompare, canAddMore } = useProductComparison();
+  
+  const inCompare = isInCompare(product.id);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     addToCart(product.id, 1);
+  };
+
+  const handleCompareToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (inCompare) {
+      removeFromCompare(product.id);
+    } else if (canAddMore) {
+      addToCompare(product as CompareProduct);
+    }
   };
 
   const formatPrice = (price: number) => {
@@ -70,14 +84,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-smooth flex items-center justify-center gap-2">
             <Button 
               size="sm" 
-              variant="secondary"
-              className="glass"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-              }}
+              variant={inCompare ? "default" : "secondary"}
+              className={inCompare ? "bg-primary" : "glass"}
+              onClick={handleCompareToggle}
+              disabled={!inCompare && !canAddMore}
+              title={inCompare ? "Remove from compare" : canAddMore ? "Add to compare" : "Compare limit reached"}
             >
-              <Eye className="h-4 w-4" />
+              {inCompare ? <Check className="h-4 w-4" /> : <GitCompare className="h-4 w-4" />}
             </Button>
             <WishlistButton 
               productId={product.id}

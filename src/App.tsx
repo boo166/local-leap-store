@@ -33,6 +33,7 @@ const Subscription = lazy(() => import("./pages/Subscription"));
 const Admin = lazy(() => import("./pages/Admin"));
 const Wishlist = lazy(() => import("./pages/Wishlist"));
 const Security = lazy(() => import("./pages/Security"));
+const Compare = lazy(() => import("./pages/Compare"));
 import AdminRoute from "./components/AdminRoute";
 
 const queryClient = new QueryClient();
@@ -70,6 +71,7 @@ const App = () => (
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/verify-email" element={<EmailVerification />} />
                 <Route path="/marketplace" element={<Marketplace />} />
+                <Route path="/compare" element={<Compare />} />
                 <Route path="/products" element={<Products />} />
                 <Route path="/store/:storeId" element={<Store />} />
                 <Route path="/cart" element={<Cart />} />
