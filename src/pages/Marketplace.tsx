@@ -14,6 +14,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import ProductCard from '@/components/ProductCard';
 import SEOHead from '@/components/SEOHead';
+import CompareBar from '@/components/CompareBar';
+import { useProductComparison } from '@/hooks/useProductComparison';
 
 interface Store {
   id: string;
@@ -56,6 +58,7 @@ const Marketplace = () => {
   const [maxPrice, setMaxPrice] = useState(1000);
   const [viewMode, setViewMode] = useState<'stores' | 'products'>('products');
   const { toast } = useToast();
+  const { compareProducts, removeFromCompare, clearCompare, maxItems } = useProductComparison();
 
   const categories = [
     'all',
@@ -494,6 +497,17 @@ const Marketplace = () => {
           )}
         </div>
       </section>
+
+      {/* Compare Bar */}
+      <CompareBar
+        products={compareProducts}
+        onRemove={removeFromCompare}
+        onClear={clearCompare}
+        maxItems={maxItems}
+      />
+
+      {/* Add padding when compare bar is visible */}
+      {compareProducts.length > 0 && <div className="h-24" />}
 
       <Footer />
     </div>
