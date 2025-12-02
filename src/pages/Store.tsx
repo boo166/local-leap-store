@@ -22,7 +22,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/hooks/useCart';
 import SEOHead from '@/components/SEOHead';
 import WishlistButton from '@/components/WishlistButton';
-import ProductReviews from '@/components/ProductReviews';
+import StoreReviews from '@/components/StoreReviews';
 
 interface StoreData {
   id: string;
@@ -351,17 +351,15 @@ const Store = () => {
         </div>
       </section>
 
-      {/* Reviews Section - Show reviews for first product as example */}
-      {products.length > 0 && (
-        <section className="py-12 bg-muted/30">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <ProductReviews
-              productId={products[0].id}
-              productName={products[0].name}
-            />
-          </div>
-        </section>
-      )}
+      {/* Store Reviews Section */}
+      <section className="py-12 bg-muted/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <StoreReviews
+            storeId={store.id}
+            storeName={store.name}
+          />
+        </div>
+      </section>
 
       <Footer />
     </div>
