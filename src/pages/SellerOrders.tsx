@@ -24,16 +24,18 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Package, Truck, CheckCircle, XCircle, Clock, Edit, DollarSign, Filter, Download } from 'lucide-react';
+import { Package, Truck, CheckCircle, XCircle, Clock, Edit, DollarSign, Filter, Download, LayoutDashboard } from 'lucide-react';
 import { useSellerOrders } from '@/hooks/useSellerOrders';
 import OrderTimeline from '@/components/OrderTimeline';
 import OrderFilters from '@/components/OrderFilters';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import RefundManagementDialog from '@/components/RefundManagementDialog';
 import SEOHead from '@/components/SEOHead';
+import BulkOrderActions from '@/components/BulkOrderActions';
+import { Link } from 'react-router-dom';
 
 const SellerOrders = () => {
-  const { orders, loading, updateOrderStatus, updateTrackingInfo } = useSellerOrders();
+  const { orders, loading, updateOrderStatus, updateTrackingInfo, refetch } = useSellerOrders();
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
   const [trackingNumber, setTrackingNumber] = useState('');
   const [sellerNotes, setSellerNotes] = useState('');
@@ -43,6 +45,7 @@ const SellerOrders = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
+  const [showBulkActions, setShowBulkActions] = useState(false);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -221,6 +224,13 @@ const SellerOrders = () => {
         
         <section className="py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <Link to="/dashboard">
+              <Button variant="ghost" size="sm" className="mb-4">
+                <LayoutDashboard className="w-4 h-4 mr-2" />
+                Back to Dashboard
+              </Button>
+            </Link>
+
             <div className="mb-8 flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-foreground mb-2">
@@ -230,13 +240,31 @@ const SellerOrders = () => {
                   View and manage orders for your products ({filteredOrders.length} {filteredOrders.length === 1 ? 'order' : 'orders'})
                 </p>
               </div>
-              {orders.length > 0 && (
-                <Button variant="outline" size="sm" onClick={exportOrders}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Export
-                </Button>
-              )}
+              <div className="flex gap-2">
+                {orders.length > 0 && (
+                  <>
+                    <Button 
+                      variant={showBulkActions ? "secondary" : "outline"} 
+                      size="sm" 
+                      onClick={() => setShowBulkActions(!showBulkActions)}
+                    >
+                      Bulk Actions
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={exportOrders}>
+                      <Download className="h-4 w-4 mr-2" />
+                      Export
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
+
+            {/* Bulk Actions Panel */}
+            {showBulkActions && orders.length > 0 && (
+              <div className="mb-6">
+                <BulkOrderActions orders={orders} onUpdate={refetch} />
+              </div>
+            )}
 
             {orders.length > 0 && (
               <OrderFilters
