@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,6 +31,9 @@ import AnalyticsMetrics from '@/components/analytics/AnalyticsMetrics';
 import RevenueChart from '@/components/analytics/RevenueChart';
 import TopProductsCard from '@/components/analytics/TopProductsCard';
 import StoreAnalyticsDashboard from '@/components/StoreAnalyticsDashboard';
+import SellerQuickActions from '@/components/SellerQuickActions';
+import RecentActivityFeed from '@/components/RecentActivityFeed';
+import { LowStockAlert } from '@/components/LowStockAlert';
 
 interface StoreData {
   id: string;
@@ -55,8 +58,11 @@ interface Product {
 }
 
 const Dashboard = () => {
+  const [searchParams] = useSearchParams();
+  const defaultTab = searchParams.get('tab') || 'analytics';
   const [stores, setStores] = useState<StoreData[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -107,6 +113,20 @@ const Dashboard = () => {
         }
 
         setProducts(productsData || []);
+
+        // Fetch pending orders count
+        const { count } = await supabase
+          .from('orders')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'pending')
+          .in('id', (
+            await supabase
+              .from('order_items')
+              .select('order_id')
+              .in('product_id', productsData?.map(p => p.id) || [])
+          ).data?.map(oi => oi.order_id) || []);
+
+        setPendingOrdersCount(count || 0);
       }
     } catch (error: any) {
       toast({
@@ -221,6 +241,14 @@ const Dashboard = () => {
               </Alert>
             )}
 
+            {/* Quick Actions */}
+            <div className="mb-6">
+              <SellerQuickActions
+                hasStores={stores.length > 0}
+                canAddProduct={!subscription.maxProducts || products.length < subscription.maxProducts}
+                pendingOrdersCount={pendingOrdersCount}
+              />
+            </div>
 
             {/* Stats Overview */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -267,20 +295,28 @@ const Dashboard = () => {
 
               <Card className="glass-card">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium">Pending Orders</CardTitle>
+                  <ShoppingBag className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">$0</div>
+                  <div className="text-2xl font-bold">{pendingOrdersCount}</div>
                   <p className="text-xs text-muted-foreground">
-                    This month
+                    Awaiting processing
                   </p>
                 </CardContent>
               </Card>
             </div>
 
+            {/* Activity Feed and Low Stock Alerts */}
+            {stores.length > 0 && (
+              <div className="grid md:grid-cols-2 gap-6 mb-8">
+                <RecentActivityFeed storeIds={stores.map(s => s.id)} />
+                <LowStockAlert storeId={stores[0].id} />
+              </div>
+            )}
+
             {/* Main Content */}
-            <Tabs defaultValue="analytics" className="space-y-4">
+            <Tabs defaultValue={defaultTab} className="space-y-4">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="analytics">
                   <BarChart3 className="h-4 w-4 mr-2" />
