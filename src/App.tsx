@@ -34,6 +34,7 @@ const Admin = lazy(() => import("./pages/Admin"));
 const Wishlist = lazy(() => import("./pages/Wishlist"));
 const Security = lazy(() => import("./pages/Security"));
 const Compare = lazy(() => import("./pages/Compare"));
+const CustomerDashboard = lazy(() => import("./pages/CustomerDashboard"));
 import AdminRoute from "./components/AdminRoute";
 
 const queryClient = new QueryClient();
@@ -81,6 +82,11 @@ const App = () => (
                 <Route path="/edit-store/:storeId" element={<EditStore />} />
                 <Route path="/edit-product/:productId" element={<EditProduct />} />
                 <Route path="/orders" element={<Orders />} />
+                <Route path="/my-dashboard" element={
+                  <ProtectedRoute>
+                    <CustomerDashboard />
+                  </ProtectedRoute>
+                } />
                 <Route path="/wishlist" element={
                   <ProtectedRoute>
                     <Wishlist />
