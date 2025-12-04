@@ -1,18 +1,42 @@
 import { Button } from "@/components/ui/button";
 import { Store, ShoppingBag, User, Menu, LogOut, Package, Shield } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useNavigate, Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import CartIcon from "@/components/CartIcon";
+import UserQuickMenu from "@/components/UserQuickMenu";
+import { supabase } from "@/integrations/supabase/client";
+
+interface UserProfile {
+  full_name?: string;
+  avatar_url?: string;
+  email?: string;
+}
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const { user, signOut } = useAuth();
-  const { isAdmin } = useUserRole();
+  const { isAdmin, hasRole } = useUserRole();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (user) {
+      fetchProfile();
+    }
+  }, [user]);
+
+  const fetchProfile = async () => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('full_name, avatar_url, email')
+      .eq('user_id', user?.id)
+      .single();
+    if (data) setProfile(data);
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -68,16 +92,7 @@ const Navigation = () => {
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center space-x-4">
             {user ? (
-              <>
-                <Button variant="ghost" size="sm" onClick={() => navigate('/profile')}>
-                  <User className="h-4 w-4 mr-2" />
-                  Profile
-                </Button>
-                <Button variant="ghost" size="sm" onClick={handleSignOut}>
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Sign Out
-                </Button>
-              </>
+              <UserQuickMenu profile={profile || undefined} />
             ) : (
               <>
                 <Button variant="ghost" size="sm" onClick={() => navigate('/auth')}>

@@ -5,7 +5,7 @@ import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Package, ShoppingBag, ArrowLeft, XCircle, AlertCircle, Download } from 'lucide-react';
+import { Package, ShoppingBag, ArrowLeft, XCircle, AlertCircle, Download, LayoutDashboard } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,6 +15,7 @@ import CancellationDialog from '@/components/CancellationDialog';
 import OrderTimeline from '@/components/OrderTimeline';
 import OrderFilters from '@/components/OrderFilters';
 import SEOHead from '@/components/SEOHead';
+import QuickReorder from '@/components/QuickReorder';
 
 interface Order {
   id: string;
@@ -31,9 +32,11 @@ interface Order {
     id: string;
     quantity: number;
     price_at_time: number;
+    product_id: string;
     products: {
       name: string;
       image_url: string;
+      is_active: boolean;
     };
   }[];
 }
@@ -65,7 +68,8 @@ const Orders = () => {
             id,
             quantity,
             price_at_time,
-            products(name, image_url)
+            product_id,
+            products(name, image_url, is_active)
           )
         `)
         .eq('user_id', user?.id)
@@ -224,12 +228,20 @@ const Orders = () => {
         
         <section className="py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <Link to="/marketplace">
-              <Button variant="ghost" size="sm" className="mb-4">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Marketplace
-              </Button>
-            </Link>
+            <div className="flex items-center gap-2 mb-4">
+              <Link to="/my-dashboard">
+                <Button variant="ghost" size="sm">
+                  <LayoutDashboard className="w-4 h-4 mr-2" />
+                  My Dashboard
+                </Button>
+              </Link>
+              <Link to="/marketplace">
+                <Button variant="ghost" size="sm">
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back to Marketplace
+                </Button>
+              </Link>
+            </div>
 
             <div className="mb-8 flex items-center justify-between">
               <div>
@@ -400,18 +412,35 @@ const Orders = () => {
                           <span className="text-primary">{formatPrice(order.total_amount)}</span>
                         </div>
 
-                        {/* Cancel order button */}
-                        {canCancelOrder(order) && (
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            className="w-full mt-2"
-                            onClick={() => handleCancelClick(order.id)}
-                          >
-                            <XCircle className="h-4 w-4 mr-2" />
-                            Cancel Order
-                          </Button>
-                        )}
+                        {/* Action buttons */}
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {/* Reorder button for completed orders */}
+                          {(order.status === 'completed' || order.status === 'delivered') && (
+                            <QuickReorder 
+                              orderItems={order.order_items.map(item => ({
+                                product_id: item.product_id,
+                                quantity: item.quantity,
+                                products: {
+                                  name: item.products.name,
+                                  is_active: item.products.is_active
+                                }
+                              }))} 
+                            />
+                          )}
+                          
+                          {/* Cancel order button */}
+                          {canCancelOrder(order) && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              className="gap-2"
+                              onClick={() => handleCancelClick(order.id)}
+                            >
+                              <XCircle className="h-4 w-4" />
+                              Cancel Order
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
