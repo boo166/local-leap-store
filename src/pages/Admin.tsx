@@ -40,7 +40,6 @@ import {
   ShoppingCart,
   Users,
   Edit,
-  Trash2,
   Shield,
   Eye,
   ToggleLeft,
@@ -49,13 +48,19 @@ import {
   Check,
   X,
   ExternalLink,
-  MessageSquare,
+  LayoutDashboard,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import AdminRoute from '@/components/AdminRoute';
 import SiteContentManager from '@/components/SiteContentManager';
 import AdminReviewModeration from '@/components/AdminReviewModeration';
+import AdminQuickActions from '@/components/admin/AdminQuickActions';
+import PlatformOverview from '@/components/admin/PlatformOverview';
+import AdminActivityFeed from '@/components/admin/AdminActivityFeed';
+import PlatformAnalytics from '@/components/admin/PlatformAnalytics';
+import StoreVerificationManager from '@/components/admin/StoreVerificationManager';
+import UserActivityLog from '@/components/admin/UserActivityLog';
 
 const Admin = () => {
   const [stores, setStores] = useState<any[]>([]);
@@ -63,8 +68,10 @@ const Admin = () => {
   const [orders, setOrders] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
+  const [pendingReviews, setPendingReviews] = useState(0);
+  const [pendingVerifications, setPendingVerifications] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('stores');
+  const [activeTab, setActiveTab] = useState('overview');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -80,6 +87,8 @@ const Admin = () => {
         fetchOrders(),
         fetchUsers(),
         fetchPayments(),
+        fetchPendingReviews(),
+        fetchPendingVerifications(),
       ]);
     } catch (error: any) {
       toast({
@@ -125,7 +134,7 @@ const Admin = () => {
       .select(`
         *,
         profiles!orders_user_id_fkey(full_name, email),
-        order_items(id, quantity, price_at_time, products(name))
+        order_items(id, quantity, price_at_time, product_id, products(name))
       `)
       .order('created_at', { ascending: false });
 
@@ -158,6 +167,24 @@ const Admin = () => {
 
     if (error) throw error;
     setPayments(data || []);
+  };
+
+  const fetchPendingReviews = async () => {
+    const { count } = await supabase
+      .from('product_reviews')
+      .select('*', { count: 'exact', head: true })
+      .eq('is_approved', false);
+    
+    setPendingReviews(count || 0);
+  };
+
+  const fetchPendingVerifications = async () => {
+    const { count } = await supabase
+      .from('store_verifications')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'pending');
+    
+    setPendingVerifications(count || 0);
   };
 
   const toggleStoreStatus = async (storeId: string, currentStatus: boolean) => {
@@ -234,7 +261,6 @@ const Admin = () => {
 
   const updateUserRole = async (userId: string, role: string) => {
     try {
-      // Validate role type
       if (role !== 'admin' && role !== 'seller' && role !== 'buyer') {
         toast({
           title: "Invalid role",
@@ -244,7 +270,6 @@ const Admin = () => {
         return;
       }
 
-      // First, check if the role already exists
       const { data: existingRole } = await supabase
         .from('user_roles')
         .select('*')
@@ -286,7 +311,6 @@ const Admin = () => {
 
   const removeUserRole = async (userId: string, role: string) => {
     try {
-      // Validate role type
       if (role !== 'admin' && role !== 'seller' && role !== 'buyer') {
         toast({
           title: "Invalid role",
@@ -324,7 +348,6 @@ const Admin = () => {
       const { data: authData } = await supabase.auth.getUser();
       if (!authData.user) throw new Error('Not authenticated');
 
-      // Calculate period dates based on billing cycle
       const now = new Date();
       const periodStart = now;
       const periodEnd = new Date(now);
@@ -335,7 +358,6 @@ const Admin = () => {
         periodEnd.setFullYear(periodEnd.getFullYear() + 1);
       }
 
-      // Update payment submission status
       const { error: paymentError } = await supabase
         .from('payment_submissions')
         .update({
@@ -347,7 +369,6 @@ const Admin = () => {
 
       if (paymentError) throw paymentError;
 
-      // Update subscription status
       const { error: subscriptionError } = await supabase
         .from('user_subscriptions')
         .update({
@@ -422,6 +443,8 @@ const Admin = () => {
     });
   };
 
+  const pendingPayments = payments.filter(p => p.status === 'pending').length;
+
   if (loading) {
     return (
       <AdminRoute>
@@ -446,9 +469,9 @@ const Admin = () => {
       <div className="min-h-screen bg-background">
         <Navigation />
 
-        <section className="py-12">
+        <section className="py-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="mb-8">
+            <div className="mb-6">
               <div className="flex items-center gap-2 mb-2">
                 <Shield className="h-8 w-8 text-primary" />
                 <h1 className="text-3xl font-bold text-foreground">
@@ -456,89 +479,92 @@ const Admin = () => {
                 </h1>
               </div>
               <p className="text-muted-foreground">
-                Manage all stores, products, orders, and users
+                Unified platform management center
               </p>
             </div>
 
-            {/* Stats Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-              <Card className="glass-card">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Stores</CardTitle>
-                  <Store className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stores.length}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {stores.filter(s => s.is_active).length} active
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="glass-card">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Products</CardTitle>
-                  <Package className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{products.length}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {products.filter(p => p.is_active).length} active
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="glass-card">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
-                  <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{orders.length}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {orders.filter(o => o.status === 'pending').length} pending
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="glass-card">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{users.length}</div>
-                  <p className="text-xs text-muted-foreground">
-                    Registered users
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="glass-card">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Payments</CardTitle>
-                  <CreditCard className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{payments.length}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {payments.filter(p => p.status === 'pending').length} pending review
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-
             {/* Main Content */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-              <TabsList className="grid w-full grid-cols-7">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+              <TabsList className="flex flex-wrap w-full h-auto gap-1 p-1">
+                <TabsTrigger value="overview" className="flex items-center gap-1">
+                  <LayoutDashboard className="h-4 w-4" />
+                  Overview
+                </TabsTrigger>
+                <TabsTrigger value="analytics">Analytics</TabsTrigger>
                 <TabsTrigger value="stores">Stores</TabsTrigger>
                 <TabsTrigger value="products">Products</TabsTrigger>
                 <TabsTrigger value="orders">Orders</TabsTrigger>
                 <TabsTrigger value="users">Users</TabsTrigger>
-                <TabsTrigger value="payments">Payments</TabsTrigger>
+                <TabsTrigger value="payments" className="relative">
+                  Payments
+                  {pendingPayments > 0 && (
+                    <Badge variant="destructive" className="ml-1 h-5 px-1.5 text-xs">
+                      {pendingPayments}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="verifications">Verifications</TabsTrigger>
                 <TabsTrigger value="reviews">Reviews</TabsTrigger>
+                <TabsTrigger value="activity">Activity</TabsTrigger>
                 <TabsTrigger value="content">Content</TabsTrigger>
               </TabsList>
+
+              {/* Overview Tab - New Unified Dashboard */}
+              <TabsContent value="overview" className="space-y-6">
+                <AdminQuickActions
+                  onNavigate={setActiveTab}
+                  pendingPayments={pendingPayments}
+                  pendingReviews={pendingReviews}
+                  pendingVerifications={pendingVerifications}
+                />
+                
+                <PlatformOverview
+                  stores={stores}
+                  products={products}
+                  orders={orders}
+                  users={users}
+                  payments={payments}
+                />
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <AdminActivityFeed />
+                  
+                  <Card className="glass-card">
+                    <CardHeader>
+                      <CardTitle className="text-lg">System Status</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Database</span>
+                        <Badge variant="default">Healthy</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Authentication</span>
+                        <Badge variant="default">Active</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Storage</span>
+                        <Badge variant="default">Available</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Edge Functions</span>
+                        <Badge variant="default">Running</Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              {/* Analytics Tab */}
+              <TabsContent value="analytics">
+                <PlatformAnalytics
+                  stores={stores}
+                  products={products}
+                  orders={orders}
+                  users={users}
+                  payments={payments}
+                />
+              </TabsContent>
 
               {/* Stores Tab */}
               <TabsContent value="stores" className="space-y-4">
@@ -554,6 +580,7 @@ const Admin = () => {
                           <TableHead>Owner</TableHead>
                           <TableHead>Category</TableHead>
                           <TableHead>Products</TableHead>
+                          <TableHead>Verified</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Actions</TableHead>
                         </TableRow>
@@ -565,6 +592,16 @@ const Admin = () => {
                             <TableCell>{store.profiles?.full_name || 'Unknown'}</TableCell>
                             <TableCell>{store.category}</TableCell>
                             <TableCell>{store.products?.length || 0}</TableCell>
+                            <TableCell>
+                              {store.is_verified ? (
+                                <Badge variant="default" className="bg-green-500/10 text-green-500">
+                                  <Shield className="h-3 w-3 mr-1" />
+                                  Verified
+                                </Badge>
+                              ) : (
+                                <Badge variant="secondary">Unverified</Badge>
+                              )}
+                            </TableCell>
                             <TableCell>
                               <Badge variant={store.is_active ? 'default' : 'secondary'}>
                                 {store.is_active ? 'Active' : 'Inactive'}
@@ -712,6 +749,94 @@ const Admin = () => {
                 </Card>
               </TabsContent>
 
+              {/* Users Tab */}
+              <TabsContent value="users" className="space-y-4">
+                <Card className="glass-card">
+                  <CardHeader>
+                    <CardTitle>All Users</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Roles</TableHead>
+                          <TableHead>Joined</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {users.map((user) => (
+                          <TableRow key={user.id}>
+                            <TableCell className="font-medium">
+                              {user.full_name || 'No name'}
+                            </TableCell>
+                            <TableCell>{user.email}</TableCell>
+                            <TableCell>
+                              <div className="flex gap-1 flex-wrap">
+                                {user.user_roles?.map((r: any, idx: number) => (
+                                  <Badge
+                                    key={idx}
+                                    variant={r.role === 'admin' ? 'default' : 'secondary'}
+                                    className="cursor-pointer"
+                                    onClick={() => removeUserRole(user.user_id, r.role)}
+                                  >
+                                    {r.role} ×
+                                  </Badge>
+                                ))}
+                              </div>
+                            </TableCell>
+                            <TableCell>{formatDate(user.created_at)}</TableCell>
+                            <TableCell>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="outline" size="sm">
+                                    <Shield className="h-3 w-3 mr-1" />
+                                    Add Role
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Assign Role</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Select a role to assign to {user.full_name || user.email}
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <div className="flex gap-2 my-4">
+                                    <Button
+                                      variant="outline"
+                                      onClick={() => updateUserRole(user.user_id, 'buyer')}
+                                    >
+                                      Buyer
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      onClick={() => updateUserRole(user.user_id, 'seller')}
+                                    >
+                                      Seller
+                                    </Button>
+                                    <Button
+                                      variant="default"
+                                      onClick={() => updateUserRole(user.user_id, 'admin')}
+                                    >
+                                      Admin
+                                    </Button>
+                                  </div>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
               {/* Payments Tab */}
               <TabsContent value="payments" className="space-y-4">
                 <Card className="glass-card">
@@ -743,13 +868,9 @@ const Admin = () => {
                               </div>
                             </TableCell>
                             <TableCell>{payment.subscription_plans?.name}</TableCell>
+                            <TableCell>{formatPrice(payment.amount)}</TableCell>
                             <TableCell>
-                              {formatPrice(payment.amount)}
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline">
-                                {payment.billing_cycle}
-                              </Badge>
+                              <Badge variant="outline">{payment.billing_cycle}</Badge>
                             </TableCell>
                             <TableCell className="font-mono text-xs">{payment.transaction_id}</TableCell>
                             <TableCell>
@@ -838,127 +959,33 @@ const Admin = () => {
                                   </AlertDialog>
                                 </div>
                               )}
-                              {payment.status !== 'pending' && (
-                                <span className="text-xs text-muted-foreground">
-                                  {payment.status === 'approved' ? 'Approved' : 'Rejected'}
-                                </span>
-                              )}
                             </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
-                    {payments.length === 0 && (
-                      <div className="text-center py-8 text-muted-foreground">
-                        No payment submissions yet
-                      </div>
-                    )}
                   </CardContent>
                 </Card>
+              </TabsContent>
+
+              {/* Verifications Tab */}
+              <TabsContent value="verifications">
+                <StoreVerificationManager />
               </TabsContent>
 
               {/* Reviews Tab */}
-              <TabsContent value="reviews" className="space-y-4">
+              <TabsContent value="reviews">
                 <AdminReviewModeration />
               </TabsContent>
 
-              {/* Site Content Tab */}
-              <TabsContent value="content" className="space-y-4">
-                <SiteContentManager />
+              {/* Activity Tab */}
+              <TabsContent value="activity">
+                <UserActivityLog />
               </TabsContent>
 
-              {/* Users Tab */}
-              <TabsContent value="users" className="space-y-4">
-                <Card className="glass-card">
-                  <CardHeader>
-                    <CardTitle>All Users</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Roles</TableHead>
-                          <TableHead>Joined</TableHead>
-                          <TableHead>Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {users.map((user) => (
-                          <TableRow key={user.id}>
-                            <TableCell className="font-medium">
-                              {user.full_name || 'N/A'}
-                            </TableCell>
-                            <TableCell>{user.email}</TableCell>
-                            <TableCell>
-                              <div className="flex gap-1 flex-wrap">
-                                {user.user_roles?.map((roleObj: any, idx: number) => (
-                                  <Badge key={idx} variant="outline">
-                                    {roleObj.role}
-                                  </Badge>
-                                )) || <span className="text-muted-foreground text-sm">No roles</span>}
-                              </div>
-                            </TableCell>
-                            <TableCell>{formatDate(user.created_at)}</TableCell>
-                            <TableCell>
-                              <div className="flex gap-2">
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <Button variant="outline" size="sm">
-                                      <Shield className="h-3 w-3 mr-1" />
-                                      Manage
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>Manage User Roles</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        Assign or remove roles for {user.full_name || user.email}
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <div className="space-y-4 my-4">
-                                      {['admin', 'seller', 'buyer'].map((role) => {
-                                        const hasRole = user.user_roles?.some(
-                                          (r: any) => r.role === role
-                                        );
-                                        return (
-                                          <div key={role} className="flex items-center justify-between">
-                                            <Label className="capitalize">{role}</Label>
-                                            {hasRole ? (
-                                              <Button
-                                                variant="destructive"
-                                                size="sm"
-                                                onClick={() => removeUserRole(user.user_id, role)}
-                                              >
-                                                Remove
-                                              </Button>
-                                            ) : (
-                                              <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => updateUserRole(user.user_id, role)}
-                                              >
-                                                Assign
-                                              </Button>
-                                            )}
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>Close</AlertDialogCancel>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
+              {/* Content Tab */}
+              <TabsContent value="content">
+                <SiteContentManager />
               </TabsContent>
             </Tabs>
           </div>
