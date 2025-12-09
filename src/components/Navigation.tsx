@@ -81,9 +81,11 @@ const Navigation = () => {
                 Admin
               </Link>
             )}
-            <Link to="/dashboard" className="text-foreground hover:text-primary transition-smooth">
-              Dashboard
-            </Link>
+            {(hasRole('seller') || isAdmin) && (
+              <Link to="/dashboard" className="text-foreground hover:text-primary transition-smooth">
+                Seller Dashboard
+              </Link>
+            )}
           </div>
 
           {/* Cart Icon */}
@@ -141,9 +143,11 @@ const Navigation = () => {
                       Admin
                     </Link>
                   )}
-                  <Link to="/dashboard" className="text-foreground hover:text-primary transition-smooth">
-                    Dashboard
-                  </Link>
+                  {(hasRole('seller') || isAdmin) && (
+                    <Link to="/dashboard" className="text-foreground hover:text-primary transition-smooth">
+                      Seller Dashboard
+                    </Link>
+                  )}
                 </>
               )}
               <div className="flex flex-col space-y-2 pt-4 border-t border-border">
