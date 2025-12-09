@@ -26,7 +26,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useSellerAnalytics } from '@/hooks/useSellerAnalytics';
-import ProtectedRoute from '@/components/ProtectedRoute';
+
 import AnalyticsMetrics from '@/components/analytics/AnalyticsMetrics';
 import RevenueChart from '@/components/analytics/RevenueChart';
 import TopProductsCard from '@/components/analytics/TopProductsCard';
@@ -158,27 +158,24 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <ProtectedRoute>
-        <div className="min-h-screen bg-background">
-          <Navigation />
-          <div className="flex items-center justify-center min-h-[60vh]">
-            <div className="glass rounded-xl p-8">
-              <div className="animate-pulse text-center space-y-4">
-                <div className="w-12 h-12 bg-primary/20 rounded-full mx-auto animate-bounce"></div>
-                <p className="text-muted-foreground">Loading dashboard...</p>
-              </div>
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="glass rounded-xl p-8">
+            <div className="animate-pulse text-center space-y-4">
+              <div className="w-12 h-12 bg-primary/20 rounded-full mx-auto animate-bounce"></div>
+              <p className="text-muted-foreground">Loading dashboard...</p>
             </div>
           </div>
-          <Footer />
         </div>
-      </ProtectedRoute>
+        <Footer />
+      </div>
     );
   }
 
   return (
-    <ProtectedRoute>
-      <div className="min-h-screen bg-background">
-        <Navigation />
+    <div className="min-h-screen bg-background">
+      <Navigation />
         
         <section className="py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -568,8 +565,7 @@ const Dashboard = () => {
         </section>
 
         <Footer />
-      </div>
-    </ProtectedRoute>
+    </div>
   );
 };
 

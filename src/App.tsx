@@ -7,6 +7,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { HelmetProvider } from 'react-helmet-async';
 import { lazy, Suspense } from "react";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
+import SellerRoute from "./components/SellerRoute";
 
 // Eager load critical pages
 import Index from "./pages/Index";
@@ -35,7 +37,7 @@ const Wishlist = lazy(() => import("./pages/Wishlist"));
 const Security = lazy(() => import("./pages/Security"));
 const Compare = lazy(() => import("./pages/Compare"));
 const CustomerDashboard = lazy(() => import("./pages/CustomerDashboard"));
-import AdminRoute from "./components/AdminRoute";
+const Unauthorized = lazy(() => import("./pages/Unauthorized"));
 
 const queryClient = new QueryClient();
 
@@ -61,13 +63,9 @@ const App = () => (
           <BrowserRouter>
             <Suspense fallback={<PageLoader />}>
               <Routes>
+                {/* Public routes */}
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
-                <Route path="/profile" element={
-                  <ProtectedRoute>
-                    <Profile />
-                  </ProtectedRoute>
-                } />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/verify-email" element={<EmailVerification />} />
@@ -75,13 +73,24 @@ const App = () => (
                 <Route path="/compare" element={<Compare />} />
                 <Route path="/products" element={<Products />} />
                 <Route path="/store/:storeId" element={<Store />} />
-                <Route path="/cart" element={<Cart />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/create-store" element={<CreateStore />} />
-                <Route path="/add-product" element={<AddProduct />} />
-                <Route path="/edit-store/:storeId" element={<EditStore />} />
-                <Route path="/edit-product/:productId" element={<EditProduct />} />
-                <Route path="/orders" element={<Orders />} />
+                <Route path="/unauthorized" element={<Unauthorized />} />
+                
+                {/* Protected routes (any authenticated user) */}
+                <Route path="/profile" element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                } />
+                <Route path="/cart" element={
+                  <ProtectedRoute>
+                    <Cart />
+                  </ProtectedRoute>
+                } />
+                <Route path="/orders" element={
+                  <ProtectedRoute>
+                    <Orders />
+                  </ProtectedRoute>
+                } />
                 <Route path="/my-dashboard" element={
                   <ProtectedRoute>
                     <CustomerDashboard />
@@ -92,23 +101,57 @@ const App = () => (
                     <Wishlist />
                   </ProtectedRoute>
                 } />
-                <Route path="/seller/orders" element={
-                  <ProtectedRoute>
-                    <SellerOrders />
-                  </ProtectedRoute>
-                } />
-                <Route path="/subscription" element={
-                  <ProtectedRoute>
-                    <Subscription />
-                  </ProtectedRoute>
-                } />
                 <Route path="/security" element={
                   <ProtectedRoute>
                     <Security />
                   </ProtectedRoute>
                 } />
-                <Route path="/admin" element={<Admin />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                
+                {/* Seller routes (seller or admin only) */}
+                <Route path="/dashboard" element={
+                  <SellerRoute>
+                    <Dashboard />
+                  </SellerRoute>
+                } />
+                <Route path="/create-store" element={
+                  <SellerRoute>
+                    <CreateStore />
+                  </SellerRoute>
+                } />
+                <Route path="/add-product" element={
+                  <SellerRoute>
+                    <AddProduct />
+                  </SellerRoute>
+                } />
+                <Route path="/edit-store/:storeId" element={
+                  <SellerRoute>
+                    <EditStore />
+                  </SellerRoute>
+                } />
+                <Route path="/edit-product/:productId" element={
+                  <SellerRoute>
+                    <EditProduct />
+                  </SellerRoute>
+                } />
+                <Route path="/seller/orders" element={
+                  <SellerRoute>
+                    <SellerOrders />
+                  </SellerRoute>
+                } />
+                <Route path="/subscription" element={
+                  <SellerRoute>
+                    <Subscription />
+                  </SellerRoute>
+                } />
+                
+                {/* Admin routes */}
+                <Route path="/admin" element={
+                  <AdminRoute>
+                    <Admin />
+                  </AdminRoute>
+                } />
+                
+                {/* Catch-all */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
