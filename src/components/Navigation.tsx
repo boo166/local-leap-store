@@ -86,6 +86,11 @@ const Navigation = () => {
                 Seller Dashboard
               </Link>
             )}
+            {user && !hasRole('seller') && !isAdmin && (
+              <Link to="/become-seller" className="text-primary font-medium hover:text-primary/80 transition-smooth">
+                Become a Seller
+              </Link>
+            )}
           </div>
 
           {/* Cart Icon */}
@@ -146,6 +151,11 @@ const Navigation = () => {
                   {(hasRole('seller') || isAdmin) && (
                     <Link to="/dashboard" className="text-foreground hover:text-primary transition-smooth">
                       Seller Dashboard
+                    </Link>
+                  )}
+                  {!hasRole('seller') && !isAdmin && (
+                    <Link to="/become-seller" className="text-primary font-medium hover:text-primary/80 transition-smooth">
+                      Become a Seller
                     </Link>
                   )}
                 </>

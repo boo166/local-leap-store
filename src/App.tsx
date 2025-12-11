@@ -38,6 +38,9 @@ const Security = lazy(() => import("./pages/Security"));
 const Compare = lazy(() => import("./pages/Compare"));
 const CustomerDashboard = lazy(() => import("./pages/CustomerDashboard"));
 const Unauthorized = lazy(() => import("./pages/Unauthorized"));
+const ProductDetails = lazy(() => import("./pages/ProductDetails"));
+const OrderDetails = lazy(() => import("./pages/OrderDetails"));
+const BecomeSeller = lazy(() => import("./pages/BecomeSeller"));
 
 const queryClient = new QueryClient();
 
@@ -72,8 +75,10 @@ const App = () => (
                 <Route path="/marketplace" element={<Marketplace />} />
                 <Route path="/compare" element={<Compare />} />
                 <Route path="/products" element={<Products />} />
+                <Route path="/product/:productId" element={<ProductDetails />} />
                 <Route path="/store/:storeId" element={<Store />} />
                 <Route path="/unauthorized" element={<Unauthorized />} />
+                <Route path="/become-seller" element={<BecomeSeller />} />
                 
                 {/* Protected routes (any authenticated user) */}
                 <Route path="/profile" element={
@@ -89,6 +94,11 @@ const App = () => (
                 <Route path="/orders" element={
                   <ProtectedRoute>
                     <Orders />
+                  </ProtectedRoute>
+                } />
+                <Route path="/orders/:orderId" element={
+                  <ProtectedRoute>
+                    <OrderDetails />
                   </ProtectedRoute>
                 } />
                 <Route path="/my-dashboard" element={
