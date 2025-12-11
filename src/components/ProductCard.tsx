@@ -56,7 +56,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   };
 
   return (
-    <Link to={`/store/${product.stores.id}`}>
+    <Link to={`/product/${product.id}`}>
       <Card className="group hover-lift glass-card cursor-pointer overflow-hidden h-full flex flex-col">
         <div className="relative">
           <img 

@@ -414,6 +414,13 @@ const Orders = () => {
 
                         {/* Action buttons */}
                         <div className="flex flex-wrap gap-2 mt-2">
+                          {/* View Details button */}
+                          <Link to={`/orders/${order.id}`}>
+                            <Button variant="outline" size="sm">
+                              View Details
+                            </Button>
+                          </Link>
+                          
                           {/* Reorder button for completed orders */}
                           {(order.status === 'completed' || order.status === 'delivered') && (
                             <QuickReorder 
