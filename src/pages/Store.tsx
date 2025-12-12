@@ -110,9 +110,9 @@ const Store = () => {
   };
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-EG', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'EGP'
     }).format(price);
   };
 
@@ -232,11 +232,13 @@ const Store = () => {
                     </div>
                     
                     <div className="flex flex-wrap items-center gap-4 mb-4">
-                      <div className="flex items-center">
-                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400 mr-1" />
-                        <span className="font-medium">4.8</span>
-                        <span className="text-muted-foreground ml-1">(124 reviews)</span>
-                      </div>
+                      {(store as any).average_rating > 0 && (
+                        <div className="flex items-center">
+                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400 mr-1" />
+                          <span className="font-medium">{((store as any).average_rating || 0).toFixed(1)}</span>
+                          <span className="text-muted-foreground ml-1">({(store as any).total_reviews || 0} reviews)</span>
+                        </div>
+                      )}
                       
                       {store.location && (
                         <div className="flex items-center text-muted-foreground">
