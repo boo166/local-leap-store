@@ -28,6 +28,8 @@ interface Store {
     full_name: string;
   };
   product_count?: number;
+  average_rating: number;
+  total_reviews: number;
 }
 
 interface Product {
@@ -112,7 +114,9 @@ const Marketplace = () => {
 
       const storesWithCounts = data?.map(store => ({
         ...store,
-        product_count: store.products?.length || 0
+        product_count: store.products?.length || 0,
+        average_rating: store.average_rating || 0,
+        total_reviews: store.total_reviews || 0
       })) || [];
 
       setStores(storesWithCounts);
@@ -336,7 +340,7 @@ const Marketplace = () => {
                   <div className="glass border-white/20 rounded-md px-4 py-2 min-w-[200px]">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm text-muted-foreground">Price Range</span>
-                      <span className="text-sm font-medium">${priceRange[0]} - ${priceRange[1]}</span>
+                      <span className="text-sm font-medium">EGP {priceRange[0]} - EGP {priceRange[1]}</span>
                     </div>
                     <Slider
                       min={0}
@@ -462,11 +466,15 @@ const Marketplace = () => {
                             by {store.profiles?.full_name || 'Unknown'}
                           </p>
                         </div>
-                        <div className="flex items-center space-x-1">
-                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                          <span className="text-sm font-medium">4.8</span>
-                          <span className="text-xs text-muted-foreground">(124)</span>
-                        </div>
+                        {store.average_rating > 0 ? (
+                          <div className="flex items-center space-x-1">
+                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                            <span className="text-sm font-medium">{store.average_rating.toFixed(1)}</span>
+                            <span className="text-xs text-muted-foreground">({store.total_reviews})</span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">New store</span>
+                        )}
                       </div>
 
                       <p className="text-muted-foreground text-sm mb-4 leading-relaxed line-clamp-2">

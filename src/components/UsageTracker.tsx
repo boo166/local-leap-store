@@ -9,9 +9,9 @@ const UsageTracker = () => {
   const { stats, loading } = useUsageStats();
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-EG', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'EGP'
     }).format(amount);
   };
 
