@@ -5,16 +5,21 @@ import StoreShowcase from "@/components/StoreShowcase";
 import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
 import WelcomeBanner from "@/components/WelcomeBanner";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
+  const { user } = useAuth();
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <Navigation />
-      <WelcomeBanner />
-      <HeroSection />
-      <FeaturesSection />
-      <StoreShowcase />
-      <CTASection />
+      {user && <WelcomeBanner />}
+      <main>
+        <HeroSection />
+        <FeaturesSection />
+        <StoreShowcase />
+        <CTASection />
+      </main>
       <Footer />
     </div>
   );
