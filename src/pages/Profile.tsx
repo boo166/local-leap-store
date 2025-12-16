@@ -118,11 +118,15 @@ const Profile = () => {
     try {
       const { error } = await supabase
         .from('profiles')
-        .upsert({
-          id: user.id,
-          user_id: user.id,
-          ...profile,
-        });
+        .upsert(
+          {
+            user_id: user.id,
+            ...profile,
+          },
+          {
+            onConflict: 'user_id',
+          }
+        );
 
       if (error) throw error;
 
@@ -153,11 +157,15 @@ const Profile = () => {
       // Update profile in database
       const { error } = await supabase
         .from('profiles')
-        .upsert({
-          id: user.id,
-          user_id: user.id,
-          avatar_url: publicUrl,
-        });
+        .upsert(
+          {
+            user_id: user.id,
+            avatar_url: publicUrl,
+          },
+          {
+            onConflict: 'user_id',
+          }
+        );
 
       if (error) {
         toast({
@@ -185,11 +193,15 @@ const Profile = () => {
       // Update profile in database
       const { error } = await supabase
         .from('profiles')
-        .upsert({
-          id: user.id,
-          user_id: user.id,
-          avatar_url: null,
-        });
+        .upsert(
+          {
+            user_id: user.id,
+            avatar_url: null,
+          },
+          {
+            onConflict: 'user_id',
+          }
+        );
 
       if (error) {
         toast({
