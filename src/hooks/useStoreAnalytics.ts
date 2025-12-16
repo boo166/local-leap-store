@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 
 export interface StoreAnalyticsSummary {
   total_views: number;
@@ -21,7 +20,6 @@ export interface StoreAnalyticsSummary {
 export const useStoreAnalytics = (storeId: string | undefined, days: number = 30) => {
   const [analytics, setAnalytics] = useState<StoreAnalyticsSummary | null>(null);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
 
   const fetchAnalytics = async () => {
     if (!storeId) return;
@@ -33,17 +31,26 @@ export const useStoreAnalytics = (storeId: string | undefined, days: number = 30
           p_store_id: storeId,
           p_days: days
         })
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
-      setAnalytics(data as StoreAnalyticsSummary);
+      
+      // Return default values if no analytics data exists yet
+      if (!data) {
+        setAnalytics({
+          total_views: 0,
+          total_unique_visitors: 0,
+          total_orders: 0,
+          total_revenue: 0,
+          avg_conversion_rate: 0,
+          daily_data: []
+        });
+      } else {
+        setAnalytics(data as StoreAnalyticsSummary);
+      }
     } catch (error: any) {
       console.error('Error fetching store analytics:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load analytics data.',
-        variant: 'destructive',
-      });
+      // Don't show error toast for empty analytics - this is expected for new stores
     } finally {
       setLoading(false);
     }

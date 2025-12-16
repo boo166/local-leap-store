@@ -63,9 +63,9 @@ const BecomeSeller = () => {
       const { data: freePlan } = await supabase
         .from('subscription_plans')
         .select('id')
-        .eq('name', 'Free')
+        .eq('name', 'Free Trial')
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
 
       if (freePlan) {
         // Create trial subscription
